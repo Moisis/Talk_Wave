@@ -10,6 +10,9 @@ import time
 import select
 import logging
 
+
+
+
 # Server side of peer
 class PeerServer(threading.Thread):
 
@@ -309,7 +312,8 @@ class peerMain:
         # as long as the user is not logged out, asks to select an option in the menu
         while choice != "3":
             # menu selection prompt
-            choice = input("Choose: \nCreate account: 1\nLogin: 2\nLogout: 3\nSearch: 4\nStart a chat: 5\n")
+            choice = input("Choose: \nCreate account: 1\nLogin: 2\nLogout: 3\nSearch: 4\nStart a chat: 5\n ")
+
             # if choice is 1, creates an account with the username
             # and password entered by the user
             if choice is "1":
@@ -322,6 +326,14 @@ class peerMain:
             elif choice is "2" and not self.isOnline:
                 username = input("username: ")
                 password = input("password: ")
+
+
+
+
+
+
+
+
                 # asks for the port number for server's tcp socket
                 peerServerPort = int(input("Enter a port number for peer server: "))
                 

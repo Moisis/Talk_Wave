@@ -2,7 +2,7 @@
     ##  Implementation of registry
     ##  150114822 - Eren Ulaş
 '''
-
+import uuid
 from socket import *
 import threading
 import select
@@ -23,7 +23,10 @@ class ClientThread(threading.Thread):
         # socket of the peer
         self.tcpClientSocket = tcpClientSocket
         # username, online status and udp server initializations
-        self.username = None
+
+        ##todo
+      ##  self.username = None
+        self.username = str(uuid.uuid4())
         self.isOnline = True
         self.udpServer = None
         print("New thread started for " + ip + ":" + str(port))
@@ -235,6 +238,8 @@ while inputs:
             tcpClientSocket, addr = tcpSocket.accept()
             newThread = ClientThread(addr[0], addr[1], tcpClientSocket)
             newThread.start()
+##TODO
+            tcpThreads[newThread.username] = newThread   # Store the client thread in a dictionary
         # if the message received comes to the udp socket
         elif s is udpSocket:
             # received the incoming udp message and parses it
