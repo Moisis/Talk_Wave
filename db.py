@@ -3,15 +3,12 @@ from pymongo import MongoClient
 
 # Includes database operations
 class DB:
-
     # db initializations
     def __init__(self):
         self.client = MongoClient('mongodb://localhost:27017/')
         self.db = self.client['p2p-chat']
 
-
-
-      # checks if an account with the username exists
+    # checks if an account with the username exists
     def is_account_exist(self, username):
         user_exists = self.db.accounts.find_one({'username': username})
         if user_exists is not None:
@@ -38,7 +35,6 @@ class DB:
         else:
             return False
 
-    #
     # logs in the user
     def user_login(self, username, ip, port):
         online_peer = {
@@ -56,5 +52,3 @@ class DB:
     def get_peer_ip_port(self, username):
         res = self.db.online_peers.find_one({"username": username})
         return res["ip"], res["port"]
-
-
