@@ -1,8 +1,10 @@
 import hashlib
+import os
 from socket import *
 import threading
 import logging
 
+import Config
 from Peer_Server import PeerServer
 from Peer_Client import PeerClient
 
@@ -38,15 +40,15 @@ class peerMain:
         self.timer = None
 
         choice = "0"
+
         # log file initialization
         logging.basicConfig(filename="peer.log", level=logging.INFO)
-
 
         try:
             # as long as the user is not logged out, asks to select an option in the menu
             while choice != "3":
                 # menu selection prompt
-                choice = input("Choose: \nCreate account: 1\nLogin: 2\nLogout: 3\nSearch: 4\nStart a chat: 5\n ")
+                choice = input("Choose: \nCreate account: 1\nLogin: 2\nLogout: 3\nSearch: 4\nStart a chat: 5\n")
 
                 # if choice is 1, creates an account with the username
                 # and password entered by the user
@@ -75,6 +77,7 @@ class peerMain:
                         self.peerServer.start()
                         # hello message is sent to registry
                         self.sendHelloMessage()
+
                 # if choice is 3 and user is logged in, then user is logged out
                 # and peer variables are set, and server and client sockets are closed
                 elif choice == "3" and self.isOnline:
@@ -148,6 +151,7 @@ class peerMain:
             if self.peerClient is not None:
                 self.peerClient.tcpClientSocket.close()
             print("Logged out successfully")
+
 
         finally:
             # Cleanup code (if any) that should run regardless of an exception
