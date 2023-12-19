@@ -7,7 +7,7 @@ import select
 # Server side of peer
 class PeerServer(threading.Thread):
 
-    # Peer server initialization
+    # Client server initialization
     def __init__(self, username, peerServerPort):
         threading.Thread.__init__(self)
         # keeps the username of the peer
@@ -33,7 +33,7 @@ class PeerServer(threading.Thread):
     # main method of the peer server thread
     def run(self):
 
-        print("Peer server started...")
+        print("Client server started...")
 
         # gets the ip address of this peer
         # first checks to get it for windows devices

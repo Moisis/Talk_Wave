@@ -1,10 +1,12 @@
-import hashlib
+
 import uuid
 import threading
 import logging
 
-from Server_UDP_Server import  UDPServer
-from  Config import db  , tcpThreads , port
+from Server_UDP_Server import UDPServer
+from Config import config_instance
+
+
 
 # This class is used to process the peer messages sent to registry
 # for each peer connected to registry, a new client thread is created
@@ -28,12 +30,11 @@ class ClientThread(threading.Thread):
 
         print("New thread started for " + ip + ":" + str(port))
 
-
     # main of the thread
     def run(self):
         # locks for thread which will be used for thread synchronization
         self.lock = threading.Lock()
-        print("Connection from: " + self.ip + ":" + str(port))
+        print("Connection from: " + self.ip + ":" + str(config_instance.port))
         print("IP Connected: " + self.ip)
 
         while True:
@@ -45,7 +46,7 @@ class ClientThread(threading.Thread):
                 if message[0] == "JOIN":
                     # join-exist is sent to peer,
                     # if an account with this username already exists
-                    if db.is_account_exist(message[1]):
+                    if config_instance.db.is_account_exist(message[1]):
                         response = "join-exist"
                         print("From-> " + self.ip + ":" + str(self.port) + " " + response)
                         logging.info("Send to " + self.ip + ":" + str(self.port) + " -> " + response)
@@ -53,8 +54,8 @@ class ClientThread(threading.Thread):
                     # join-success is sent to peer,
                     # if an account with this username is not exist, and the account is created
                     else:
-                        db.register(message[1], message[2])
-                        #db.register(message[1] ,  hashlib.sha3_256(message[2].encode()).hexdigest())
+                        config_instance.db.register(message[1], message[2])
+                        # db.register(message[1] ,  hashlib.sha3_256(message[2].encode()).hexdigest())
                         response = "join-success"
                         logging.info("Send to " + self.ip + ":" + str(self.port) + " -> " + response)
                         self.tcpClientSocket.send(response.encode())
@@ -62,13 +63,13 @@ class ClientThread(threading.Thread):
                 elif message[0] == "LOGIN":
                     # login-account-not-exist is sent to peer,
                     # if an account with the username does not exist
-                    if not db.is_account_exist(message[1]):
+                    if not  config_instance.db.is_account_exist(message[1]):
                         response = "login-account-not-exist"
                         logging.info("Send to " + self.ip + ":" + str(self.port) + " -> " + response)
                         self.tcpClientSocket.send(response.encode())
                     # login-online is sent to peer,
                     # if an account with the username already online
-                    elif db.is_account_online(message[1]):
+                    elif  config_instance.db.is_account_online(message[1]):
                         response = "login-online"
                         logging.info("Send to " + self.ip + ":" + str(self.port) + " -> " + response)
                         self.tcpClientSocket.send(response.encode())
@@ -76,20 +77,20 @@ class ClientThread(threading.Thread):
                     # if an account with the username exists and not online
                     else:
                         # retrieves the account's password, and checks if the one entered by the user is correct
-                        retrievedPass = db.get_password(message[1])
+                        retrievedPass =  config_instance.db.get_password(message[1])
                         # if password is correct, then peer's thread is added to threads list
                         # peer is added to db with its username, port number, and ip address
                         if retrievedPass == message[2]:
                             self.username = message[1]
                             self.lock.acquire()
                             try:
-                                tcpThreads[self.username] = self
+                                config_instance.tcpThreads[self.username] = self
                             finally:
                                 self.lock.release()
-##todo
+                            ##todo
 
-                            db.user_login(message[1], self.ip, message[3])
-                           ## db.user_login(message[1], self.ip, hashlib.sha3_256(message[3].encode()).hexdigest())
+                            config_instance.db.user_login(message[1], self.ip, message[3])
+                            ## db.user_login(message[1], self.ip, hashlib.sha3_256(message[3].encode()).hexdigest())
                             # login-success is sent to peer,
                             # and a udp server thread is created for this peer, and thread is started
                             # timer thread of the udp server is started
@@ -111,12 +112,12 @@ class ClientThread(threading.Thread):
                     # and removes the thread for this user from tcpThreads
                     # socket is closed and timer thread of the udp for this
                     # user is cancelled
-                    if len(message) > 1 and message[1] is not None and db.is_account_online(message[1]):
-                        db.user_logout(message[1])
+                    if len(message) > 1 and message[1] is not None and config_instance.db.is_account_online(message[1]):
+                        config_instance.db.user_logout(message[1])
                         self.lock.acquire()
                         try:
-                            if message[1] in tcpThreads:
-                                del tcpThreads[message[1]]
+                            if message[1] in config_instance.tcpThreads:
+                                del config_instance.tcpThreads[message[1]]
                         finally:
                             self.lock.release()
                         print(self.ip + ":" + str(self.port) + " is logged out")
@@ -129,11 +130,11 @@ class ClientThread(threading.Thread):
                 #   SEARCH  #
                 elif message[0] == "SEARCH":
                     # checks if an account with the username exists
-                    if db.is_account_exist(message[1]):
+                    if config_instance.db.is_account_exist(message[1]):
                         # checks if the account is online
                         # and sends the related response to peer
-                        if db.is_account_online(message[1]):
-                            peer_info = db.get_peer_ip_port(message[1])
+                        if config_instance.db.is_account_online(message[1]):
+                            peer_info = config_instance.db.get_peer_ip_port(message[1])
                             response = "search-success " + peer_info[0] + ":" + peer_info[1]
                             logging.info("Send to " + self.ip + ":" + str(self.port) + " -> " + response)
                             self.tcpClientSocket.send(response.encode())

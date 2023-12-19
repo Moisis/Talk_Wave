@@ -2,17 +2,13 @@ from socket import *
 import select
 import logging
 from Server_Client_Thread import ClientThread
-from Config import port, portUDP, tcpThreads
+from Config import config_instance
+
 
 
 class Server_Main:
     # tcp and udp server port initializations
     print("Registy started...")
-    # port = 15600
-    # portUDP = 15500
-
-    # # db initialization
-    # db = db.DB()
 
     # gets the ip address of this peer
     # first checks to get it for windows devices
@@ -27,27 +23,21 @@ class Server_Main:
         host = ni.ifaddresses('en0')[ni.AF_INET][0]['addr']
 
     print("Registry IP address: " + host)
-    print("Registry port number: " + str(port))
+    print("Registry port number: " + str(config_instance.port))
 
-    # # onlinePeers list for online account
-    # onlinePeers = {}
-    # # accounts list for accounts
-    # accounts = {}
-    # # tcpThreads list for online client's thread
-    # tcpThreads = {}
 
     # tcp and udp socket initializations
     tcpSocket = socket(AF_INET, SOCK_STREAM)
     udpSocket = socket(AF_INET, SOCK_DGRAM)
-    tcpSocket.bind((host, port))
-    udpSocket.bind((host, portUDP))
+    tcpSocket.bind((host, config_instance.port))
+    udpSocket.bind((host, config_instance.portUDP))
     tcpSocket.listen(5)
 
     # input sockets that are listened
     inputs = [tcpSocket, udpSocket]
 
     # log file initialization
-    logging.basicConfig(filename="registry.log", level=logging.INFO)
+    logging.basicConfig(filename="../registry.log", level=logging.INFO)
 
     # as long as at least a socket exists to listen registry runs
     while inputs:
@@ -64,7 +54,7 @@ class Server_Main:
                 Current_Peer_Port = addr[1]
                 newThread.start()
                 ##TODO
-                tcpThreads[newThread.username] = newThread  # Store the client thread in a dictionary
+                config_instance.tcpThreads[newThread.username] = newThread  # Store the client thread in a dictionary
             # if the message received comes to the udp socket
             elif s is udpSocket:
                 # received the incoming udp message and parses it
@@ -74,9 +64,9 @@ class Server_Main:
                 if message[0] == "HELLO":
                     # checks if the account that this hello message
                     # is sent from is online
-                    if message[1] in tcpThreads:
+                    if message[1] in config_instance.tcpThreads:
                         # resets the timeout for that peer since the hello message is received
-                        tcpThreads[message[1]].resetTimeout()
+                        config_instance.tcpThreads[message[1]].resetTimeout()
                         print("Hello is received from " + message[1])
                         logging.info(
                             "Received from " + clientAddress[0] + ":" + str(clientAddress[1]) + " -> " + " ".join(

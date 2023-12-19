@@ -8,6 +8,11 @@ class DB:
         self.client = MongoClient('mongodb://localhost:27017/')
         self.db = self.client['p2p-chat']
 
+    def get_online_peers_usernames(self):
+        result_cursor = self.db.online_peers.find({"username": {"$exists": True}})
+        usernames = [doc['username'] for doc in result_cursor]
+        return usernames
+
     # checks if an account with the username exists
     def is_account_exist(self, username):
         user_exists = self.db.accounts.find_one({'username': username})

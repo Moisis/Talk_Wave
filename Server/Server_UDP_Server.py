@@ -1,6 +1,6 @@
 import threading
 
-from Config import db, tcpThreads
+from Config import config_instance
 
 
 # implementation of the udp server thread for clients
@@ -18,9 +18,9 @@ class UDPServer(threading.Thread):
     # then peer is disconnected
     def waitHelloMessage(self):
         if self.username is not None:
-            db.user_logout(self.username)
-            if self.username in tcpThreads:
-                del tcpThreads[self.username]
+            config_instance.db.user_logout(self.username)
+            if self.username in config_instance.tcpThreads:
+                del config_instance.tcpThreads[self.username]
         self.tcpClientSocket.close()
         print("Removed " + self.username + " from online peers")
 

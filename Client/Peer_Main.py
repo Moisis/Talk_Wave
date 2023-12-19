@@ -1,12 +1,13 @@
 import hashlib
-import os
 from socket import *
 import threading
 import logging
+from colorama import Fore
 
-import Config
 from Peer_Server import PeerServer
 from Peer_Client import PeerClient
+
+from Config import config_instance
 
 
 # main process of the peer
@@ -42,13 +43,14 @@ class peerMain:
         choice = "0"
 
         # log file initialization
-        logging.basicConfig(filename="peer.log", level=logging.INFO)
+        logging.basicConfig(filename="../peer.log", level=logging.INFO)
 
         try:
             # as long as the user is not logged out, asks to select an option in the menu
             while choice != "3":
                 # menu selection prompt
-                choice = input("Choose: \nCreate account: 1\nLogin: 2\nLogout: 3\nSearch: 4\nStart a chat: 5\n")
+                choice = input(
+                    "Choose: \nCreate account: 1\nLogin: 2\nLogout: 3\nSearch: 4\nStart a chat: 5\nShow Online Users : 6\n")
 
                 # if choice is 1, creates an account with the username
                 # and password entered by the user
@@ -100,6 +102,13 @@ class peerMain:
                     # if user is found its ip address is shown to user
                     if searchStatus is not None and searchStatus != 0:
                         print("IP address of " + username + " is " + searchStatus)
+                elif choice == "6":
+                    config_instance.update_online_peer()
+
+                    for item in config_instance.onlinePeers:
+                        print(item)
+
+
                 # if choice is 5 and user is online, then user is asked
                 # to enter the username of the user that is wanted to be chatted
                 elif choice == "5" and self.isOnline:
@@ -140,6 +149,8 @@ class peerMain:
             # socket of the client is closed
             if choice != "CANCEL":
                 self.tcpClientSocket.close()
+
+
         except KeyboardInterrupt:
             # Handle KeyboardInterrupt (Ctrl+C) gracefully
             print("Received KeyboardInterrupt. Logging out...")

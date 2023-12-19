@@ -27,7 +27,7 @@ class PeerClient(threading.Thread):
 
     # main method of the peer client thread
     def run(self):
-        print("Peer client started...")
+        print("Client client started...")
         # connects to the server of other peer
         self.tcpClientSocket.connect((self.ipToConnect, self.portToConnect))
         # if the server of this peer is not connected by someone else and if this is the requester side peer client then enters here
