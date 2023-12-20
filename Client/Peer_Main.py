@@ -2,7 +2,6 @@ import hashlib
 from socket import *
 import threading
 import logging
-
 import colorama
 from colorama import Fore
 
@@ -53,10 +52,11 @@ class peerMain:
             while choice != "7":
                 # menu selection prompt
                 if not self.isOnline:
+                    print(colorama.Fore.LIGHTMAGENTA_EX + "Welcome!")
                     choice = input(colorama.Fore.CYAN+
-                        "Welcome!\nChoose: \n1.Create account\n2.Login\n7.Exit\n")
+                        "Choose: \n1.Create account\n2.Login\n7.Exit\n")
                 else:
-
+                    print(colorama.Fore.LIGHTMAGENTA_EX+"Hello "+username+'!')
                     choice = input(colorama.Fore.CYAN+
                         "Choose: \n1.Search\n2.Start a chat\n3.Show Online Users\n5.Logout\n")
                 # if choice is 1, creates an account with the username
@@ -99,8 +99,8 @@ class peerMain:
                     self.peerServer.tcpServerSocket.close()
                     if self.peerClient is not None:
                         self.peerClient.tcpClientSocket.close()
-                    print("Logged out successfully")
-                    p=peerMain()
+                    print(colorama.Fore.LIGHTGREEN_EX+"Logged out successfully")
+                    p = peerMain()
 
 
                 # is peer is not logged in and exits the program
@@ -166,7 +166,7 @@ class peerMain:
 
         except KeyboardInterrupt:
             # Handle KeyboardInterrupt (Ctrl+C) gracefully
-            print("Received KeyboardInterrupt. Logging out...")
+            print(colorama.Fore.RED+"Received KeyboardInterrupt. Logging out...")
             self.logout(1)  # Logout with option 1
             self.isOnline = False
             self.loginCredentials = (None, None)
@@ -174,7 +174,7 @@ class peerMain:
             self.peerServer.tcpServerSocket.close()
             if self.peerClient is not None:
                 self.peerClient.tcpClientSocket.close()
-            print("Logged out successfully")
+            print(colorama.Fore.LIGHTGREEN_EX+"Logged out successfully")
 
 
         finally:
@@ -192,7 +192,7 @@ class peerMain:
         response = self.tcpClientSocket.recv(1024).decode()
         logging.info("Received from " + self.registryName + " -> " + response)
         if response == "join-success":
-            print(colorama.Fore.GREEN+"Account created...")
+            print(colorama.Fore.LIGHTGREEN_EX+"Account created...")
         elif response == "join-exist":
             print(colorama.Fore.RED+"choose another username or login...")
 
@@ -206,7 +206,7 @@ class peerMain:
         response = self.tcpClientSocket.recv(1024).decode()
         logging.info("Received from " + self.registryName + " -> " + response)
         if response == "login-success":
-            print(colorama.Fore.GREEN+"Logged in successfully...")
+            print(colorama.Fore.LIGHTGREEN_EX+"Logged in successfully...")
             return 1
         elif response == "login-account-not-exist":
             print(colorama.Fore.RED+"Account does not exist...")
@@ -241,13 +241,13 @@ class peerMain:
         response = self.tcpClientSocket.recv(1024).decode().split()
         logging.info("Received from " + self.registryName + " -> " + " ".join(response))
         if response[0] == "search-success":
-            print(username + " is found successfully...")
+            print(colorama.Fore.LIGHTGREEN_EX+username + " is found successfully...")
             return response[1]
         elif response[0] == "search-user-not-online":
             print(username + " is not online...")
             return 0
         elif response[0] == "search-user-not-found":
-            print(username + " is not found")
+            print(colorama.Fore.RED+username + " is not found")
             return None
 
     # function for sending hello message
