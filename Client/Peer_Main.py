@@ -2,6 +2,8 @@ import hashlib
 from socket import *
 import threading
 import logging
+
+import colorama
 from colorama import Fore
 
 from Peer_Server import PeerServer
@@ -15,8 +17,9 @@ class peerMain:
 
     # peer initializations
     def __init__(self):
+        colorama.init(autoreset=True)
         # ip address of the registry
-        self.registryName = input("Enter IP address of registry: ")
+        self.registryName = gethostname()
         # self.registryName = 'localhost'
         # port number of the registry
         self.registryPort = 15600
@@ -47,26 +50,32 @@ class peerMain:
 
         try:
             # as long as the user is not logged out, asks to select an option in the menu
-            while choice != "3":
+            while choice != "7":
                 # menu selection prompt
-                choice = input(
-                    "Choose: \nCreate account: 1\nLogin: 2\nLogout: 3\nSearch: 4\nStart a chat: 5\nShow Online Users : 6\n")
+                if not self.isOnline:
+                    choice = input(colorama.Fore.CYAN+
+                        "Welcome!\nChoose: \n1.Create account\n2.Login\n7.Exit\n")
+                else:
 
+                    choice = input(colorama.Fore.CYAN+
+                        "Choose: \n1.Search\n2.Start a chat\n3.Show Online Users\n5.Logout\n")
                 # if choice is 1, creates an account with the username
                 # and password entered by the user
-                if choice == "1":
-                    username = input("username: ")
-                    password = input("password: ")
+                if choice == "1" and not self.isOnline:
+                    username = input(colorama.Fore.LIGHTYELLOW_EX+"username: ")
+                    password = input(colorama.Fore.LIGHTYELLOW_EX+"password: ")
 
                     self.createAccount(username, hashlib.sha3_256(password.encode()).hexdigest())
                 # if choice is 2 and user is not logged in, asks for the username
                 # and the password to login
                 elif choice == "2" and not self.isOnline:
-                    username = input("username: ")
-                    password = input("password: ")
+                    username = input(colorama.Fore.LIGHTYELLOW_EX+"username: ")
+                    password = input(colorama.Fore.LIGHTYELLOW_EX+"password: ")
 
-                    # asks for the port number for server's tcp socket
-                    peerServerPort = int(input("Enter a port number for peer server: "))
+                    # assigns port to peer
+                    sock = socket()
+                    sock.bind(('', 0))
+                    peerServerPort = sock.getsockname()[1]
 
                     status = self.login(username, hashlib.sha3_256(password.encode()).hexdigest(), peerServerPort)
                     # is user logs in successfully, peer variables are set
@@ -82,7 +91,7 @@ class peerMain:
 
                 # if choice is 3 and user is logged in, then user is logged out
                 # and peer variables are set, and server and client sockets are closed
-                elif choice == "3" and self.isOnline:
+                elif choice == "5" and self.isOnline:
                     self.logout(1)
                     self.isOnline = False
                     self.loginCredentials = (None, None)
@@ -92,27 +101,28 @@ class peerMain:
                         self.peerClient.tcpClientSocket.close()
                     print("Logged out successfully")
                 # is peer is not logged in and exits the program
-                elif choice == "3":
+                elif choice == "7" and not self.isOnline:
                     self.logout(2)
                 # if choice is 4 and user is online, then user is asked
                 # for a username that is wanted to be searched
-                elif choice == "4" and self.isOnline:
-                    username = input("Username to be searched: ")
+                elif choice == "1" and self.isOnline:
+                    username = input(colorama.Fore.LIGHTYELLOW_EX+"Username to be searched: ")
                     searchStatus = self.searchUser(username)
-                    # if user is found its ip address is shown to user
+
+                   # if user is found its ip address is shown to user
                     if searchStatus is not None and searchStatus != 0:
                         print("IP address of " + username + " is " + searchStatus)
-                elif choice == "6":
+                elif choice == "3" and self.isOnline:
                     config_instance.update_online_peer()
-
+                    print("Online users:\n")
                     for item in config_instance.onlinePeers:
                         print(item)
 
 
                 # if choice is 5 and user is online, then user is asked
                 # to enter the username of the user that is wanted to be chatted
-                elif choice == "5" and self.isOnline:
-                    username = input("Enter the username of user to start chat: ")
+                elif choice == "2" and self.isOnline:
+                    username = input(colorama.Fore.LIGHTYELLOW_EX+"Enter the username of user to start chat: ")
                     searchStatus = self.searchUser(username)
                     # if searched user is found, then its ip address and port number is retrieved
                     # and a client thread is created
