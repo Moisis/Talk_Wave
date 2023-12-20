@@ -1,3 +1,0 @@
-INFO:root:Send to 192.168.0.108:15600 -> JOIN Miso 123
-INFO:root:Received from 192.168.0.108 -> join-success
-INFO:root:Send to 192.168.0.108:15600 -> LOGOUT
