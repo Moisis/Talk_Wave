@@ -114,9 +114,9 @@ class peerMain:
                         print("IP address of " + username + " is " + searchStatus)
                 elif choice == "3" and self.isOnline:
                     config_instance.update_online_peer()
-                    print("Online users:\n")
+                    print(colorama.Fore.BLUE+"Online users:")
                     for item in config_instance.onlinePeers:
-                        print(item)
+                        print(colorama.Fore.BLUE+item)
 
 
                 # if choice is 5 and user is online, then user is asked
@@ -189,9 +189,9 @@ class peerMain:
         response = self.tcpClientSocket.recv(1024).decode()
         logging.info("Received from " + self.registryName + " -> " + response)
         if response == "join-success":
-            print("Account created...")
+            print(colorama.Fore.GREEN+"Account created...")
         elif response == "join-exist":
-            print("choose another username or login...")
+            print(colorama.Fore.RED+"choose another username or login...")
 
     # login function
     def login(self, username, password, peerServerPort):
@@ -203,16 +203,16 @@ class peerMain:
         response = self.tcpClientSocket.recv(1024).decode()
         logging.info("Received from " + self.registryName + " -> " + response)
         if response == "login-success":
-            print("Logged in successfully...")
+            print(colorama.Fore.GREEN+"Logged in successfully...")
             return 1
         elif response == "login-account-not-exist":
-            print("Account does not exist...")
+            print(colorama.Fore.RED+"Account does not exist...")
             return 0
         elif response == "login-online":
             print("Account is already online...")
             return 2
         elif response == "login-wrong-password":
-            print("Wrong password...")
+            print(colorama.Fore.RED+"Wrong password...")
             return 3
 
     # logout function
