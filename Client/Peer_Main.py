@@ -100,9 +100,6 @@ class peerMain:
                     if self.peerClient is not None:
                         self.peerClient.tcpClientSocket.close()
                     print("Logged out successfully")
-                    p=peerMain()
-
-
                 # is peer is not logged in and exits the program
                 elif choice == "7" and not self.isOnline:
                     self.logout(2)
