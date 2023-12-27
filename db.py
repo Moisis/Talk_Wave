@@ -9,9 +9,8 @@ class DB:
         self.db = self.client['p2p-chat']
 
     def get_online_peers_usernames(self):
-        result_cursor = self.db.online_peers.find({"username": {"$exists": True}})
-        usernames = [doc['username'] for doc in result_cursor]
-        return usernames
+        projection = {'username': 1, '_id': 0}
+        return list(self.db.online_peers.find({}, projection))
 
     # checks if an account with the username exists
     def is_account_exist(self, username):
@@ -57,3 +56,4 @@ class DB:
     def get_peer_ip_port(self, username):
         res = self.db.online_peers.find_one({"username": username})
         return res["ip"], res["port"]
+
