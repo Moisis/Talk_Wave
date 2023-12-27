@@ -1,6 +1,7 @@
 from socket import *
 import select
 import logging
+import colorama
 from Server_Client_Thread import ClientThread
 from Config import config_instance
 
@@ -8,7 +9,7 @@ from Config import config_instance
 
 class Server_Main:
     # tcp and udp server port initializations
-    print("Registy started...")
+    print(colorama.Fore.GREEN+"Registy started...")
 
     # gets the ip address of this peer
     # first checks to get it for windows devices

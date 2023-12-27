@@ -1,3 +1,5 @@
+import colorama
+
 import db
 
 
@@ -14,7 +16,7 @@ class ConfigServerThis:
     # tcp and udp server port initializations
     def __init__(self):
         self.onlinePeers = {}
-        print("Config started...")
+        print(colorama.Fore.GREEN+"Config started...")
         self.port = 15600
         self.portUDP = 15500
 
