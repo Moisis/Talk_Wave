@@ -58,7 +58,7 @@ class peerMain:
                 else:
 
                     choice = input(colorama.Fore.CYAN +
-                        "Choose: \n1.Search\n2.Start a chat\n3.Show Online Users\n4.Create Chatroom\n5.Display available rooms\n6.Join Chatroom\n7.Delete Chatroom\n8.Logout\n")
+                        "Choose: \n1.Search\n2.Start a chat\n3.Show Online Users\n4.Create Chatroom\n5.Display available rooms\n6.Hatb2a Join\n7.Hatb2a Delete\n8.Logout\n")
                 # if choice is 1, creates an account with the username
                 # and password entered by the user
                 if choice == "1" and not self.isOnline:
@@ -123,17 +123,36 @@ class peerMain:
                 # This choice creates a new chatroom and saves it in the database
                     try:
                         roomId = input("Enter a Room ID: ")
-                        self.createRoom(roomId)
+                        self.createRoom(roomId, username)
                     except Exception:
-                        print("Please enter a valid/available room id.")
-                    print("Room Created Successfully\n")
+                        print("Please Enter a Valid Room ID.")
 
 
                 elif choice == "5" and self.isOnline:
                     config_instance.update_available_chatrooms()
-                    print(colorama.Fore.BLUE + "Chatrooms:")
+                    print(colorama.Fore.BLUE + "Rooms:")
                     for item in config_instance.availableChatrooms:
                         print(colorama.Fore.BLUE + item)
+
+                elif choice == "6" and self.isOnline:
+                    try:
+                        roomId = input("Enter a Room ID: ")
+                        self.joinRoom(roomId, username)
+                        print("Room Joined Successfully\n")
+
+                    except Exception:
+                        print("Please Enter a Valid Room ID.")
+
+
+                elif choice == "7" and self.isOnline:
+                    try:
+                        roomId = input("Enter a Room ID: ")
+                        self.deleteRoom(roomId)
+                        print("Room Deleted Successfully\n")
+
+                    except Exception:
+                        print("Please Enter a Valid Room ID.")
+
 
                 # if choice is 5 and user is online, then user is asked
                 # to enter the username of the user that is wanted to be chatted
@@ -263,23 +282,42 @@ class peerMain:
             print(username + " is not found")
             return None
 
-    def createRoom(self, roomId):
+    def createRoom(self, roomId, username):
 
         # join message to create an account is composed and sent to registry
         # if response is success then informs the user for account creation
         # if response exists then informs the user for account existence
-        message = "CREATE-ROOM " + roomId
-        logging.info("Send to " + self.registryName + ":" +
-                     str(self.registryPort) + " -> " + message)
+        message = "CREATE-ROOM " + roomId + " " + username
+        logging.info("Send to " + self.registryName + ":" + str(self.registryPort) + " -> " + message)
         self.tcpClientSocket.send(message.encode())
         response = self.tcpClientSocket.recv(1024).decode()
         logging.info("Received from " + self.registryName + " -> " + response)
         if response == "create-room-success":
-            print("Chat room created successfully.")
+            print("Chat Room Created Successfully.")
         elif response == "chat-room-exist":
-            print("chat room already exits")
+            print("Chat Room Already Exists")
 
+    def joinRoom(self, roomId, username):
+        message = "JOIN-ROOM " + roomId + " " + username
+        logging.info("Send to " + self.registryName + ":" + str(self.registryPort) + " -> " + message)
+        self.tcpClientSocket.send(message.encode())
+        response = self.tcpClientSocket.recv(1024).decode()
+        logging.info("Received from " + self.registryName + " -> " + response)
+        if response == "join-success":
+            print(f"joined {roomId} successfully")
 
+        elif response == "join-exist":
+            print("you are already in chatroom")
+    def deleteRoom(self, roomId):
+        message = "DELETE-ROOM " + roomId
+        logging.info("Send to " + self.registryName + ":" + str(self.registryPort) + " -> " + message)
+        self.tcpClientSocket.send(message.encode())
+        response = self.tcpClientSocket.recv(1024).decode()
+        logging.info("Received from " + self.registryName + " -> " + response)
+        if response == "delete-room-success":
+            print("Chat Room Deleted Successfully.")
+        elif response == "chat-room-not-exist":
+            print("Chat Room Doesn't Exist")
 
     # function for sending hello message
     # a timer thread is used to send hello messages to udp socket of registry

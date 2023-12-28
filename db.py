@@ -61,18 +61,41 @@ class DB:
     def is_room_exist(self, roomId):
         return bool(self.db.rooms.find_one({'roomId': roomId}))
 
-    def register_room(self, roomId):
+    def register_room(self, roomId, username):
 
     # Check if the roomId already exists in the database
         if self.db.rooms.find_one({"roomId": roomId}):
             raise ValueError(f"Room with id {roomId} already exists.")
         room = {
             "roomId": roomId,
-            "peers": []
+            "peers": [username]
         }
-        # Store the room information in the database
+
+        self.db.accounts.update_one({"username": username}, {"$push": {"roomId": roomId}})
+
         self.db.rooms.insert_one(room)
+
+
+    # Store the room information in the database
     def get_available_chatrooms(self):
         result_cursor = self.db.rooms.find({"roomId": {"$exists": True}})
         chatrooms = [doc['roomId'] for doc in result_cursor]
         return chatrooms
+
+    def join_room(self, roomId, username):  # add members to chatroom and update if new peer joined
+            self.db.chatrooms.update_one(
+                {"roomId": roomId}, {"$push": {"peers": username}}
+            )
+            self.db.accounts.update_one(
+                {"username": username}, {"$push": {"ChatRooms": roomId}})
+
+    def delete_room(self, roomId):
+        # Check if the roomId exists in the database
+        existing_room = self.db.rooms.find_one({"roomId": roomId})
+
+        if existing_room:
+            # Delete the room from the database
+            self.db.rooms.delete_one({"roomId": roomId})
+            print(f"Room with id {roomId} has been deleted.")
+        else:
+            print(f"Room with id {roomId} does not exist.")

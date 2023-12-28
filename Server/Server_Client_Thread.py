@@ -134,12 +134,42 @@ class ClientThread(threading.Thread):
                     if config_instance.db.is_room_exist(message[1]):
                         response = "chat-room-exist"
                         print("From-> " + self.ip + ":" + str(self.port) + " " + response)
-                        logging.info("Send to " + self.ip + ":" + str(self.port) + " -> " +
-                                 response)
+                        logging.info("Send to " + self.ip + ":" + str(self.port) + " -> " + response)
                         self.tcpClientSocket.send(response.encode())
                     else:
-                        config_instance.db.register_room(message[1])
+                        config_instance.db.register_room(message[1], message[2])
                         response = "create-room-success"
+                        logging.info("Send to " + self.ip + ":" + str(self.port) + " -> " + response)
+                        self.tcpClientSocket.send(response.encode())
+
+                elif message[0] == "JOIN-ROOM":
+                    print("Welcome!")
+                    roomId = message[1]
+                    print(f"RoomID = {roomId}")
+
+                    if config_instance.db.is_room_exist(roomId):
+                        config_instance.db.join_room(roomId,message[2])
+                        response = "join-success"
+                        logging.info("Send to " + self.ip + ":" + str(self.port) + " -> " + str(response))
+                        self.tcpClientSocket.send(response.encode())
+
+                    else:
+                        response = "join-exist"
+                        print("From-> " + self.ip + ":" + str(self.port) + " " + response)
+                        logging.info("Send to " + self.ip + ":" + str(self.port) + " -> " + response)
+                        self.tcpClientSocket.send(response.encode())
+
+
+
+                # DELETE #
+                elif message[0] == "DELETE-ROOM":
+                    if not config_instance.db.is_room_exist(message[1]):
+                        response = "chat-room-not-exist"
+                        logging.info("Send to " + self.ip + ":" + str(self.port) + " -> " + response)
+                        self.tcpClientSocket.send(response.encode())
+                    else:
+                        config_instance.db.delete_room(message[1])
+                        response == "delete-room-success"
                         logging.info("Send to " + self.ip + ":" + str(self.port) + " -> " + response)
                         self.tcpClientSocket.send(response.encode())
 
