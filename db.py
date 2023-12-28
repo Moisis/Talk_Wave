@@ -57,3 +57,22 @@ class DB:
     def get_peer_ip_port(self, username):
         res = self.db.online_peers.find_one({"username": username})
         return res["ip"], res["port"]
+
+    def is_room_exist(self, roomId):
+        return bool(self.db.rooms.find_one({'roomId': roomId}))
+
+    def register_room(self, roomId):
+
+    # Check if the roomId already exists in the database
+        if self.db.rooms.find_one({"roomId": roomId}):
+            raise ValueError(f"Room with id {roomId} already exists.")
+        room = {
+            "roomId": roomId,
+            "peers": []
+        }
+        # Store the room information in the database
+        self.db.rooms.insert_one(room)
+    def get_available_chatrooms(self):
+        result_cursor = self.db.rooms.find({"roomId": {"$exists": True}})
+        chatrooms = [doc['roomId'] for doc in result_cursor]
+        return chatrooms

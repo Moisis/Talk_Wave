@@ -27,6 +27,8 @@ class ConfigServerThis:
         self.onlinePeers = self.db.get_online_peers_usernames()
         return self.onlinePeers
 
-
+    def update_available_chatrooms(self):
+        self.availableChatrooms = self.db.get_available_chatrooms()
+        return self.availableChatrooms
 # Create an instance of the class
 config_instance = ConfigServerThis()

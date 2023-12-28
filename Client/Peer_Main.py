@@ -50,15 +50,15 @@ class peerMain:
 
         try:
             # as long as the user is not logged out, asks to select an option in the menu
-            while choice != "7":
+            while choice != "9":
                 # menu selection prompt
                 if not self.isOnline:
-                    choice = input(colorama.Fore.CYAN+
-                        "Welcome!\nChoose: \n1.Create account\n2.Login\n7.Exit\n")
+                    choice = input(colorama.Fore.CYAN +
+                        "Welcome!\nChoose: \n1.Create account\n2.Login\n9.Exit\n")
                 else:
 
-                    choice = input(colorama.Fore.CYAN+
-                        "Choose: \n1.Search\n2.Start a chat\n3.Show Online Users\n5.Logout\n")
+                    choice = input(colorama.Fore.CYAN +
+                        "Choose: \n1.Search\n2.Start a chat\n3.Show Online Users\n4.Create Chatroom\n5.Display available rooms\n6.Join Chatroom\n7.Delete Chatroom\n8.Logout\n")
                 # if choice is 1, creates an account with the username
                 # and password entered by the user
                 if choice == "1" and not self.isOnline:
@@ -91,7 +91,7 @@ class peerMain:
 
                 # if choice is 3 and user is logged in, then user is logged out
                 # and peer variables are set, and server and client sockets are closed
-                elif choice == "5" and self.isOnline:
+                elif choice == "8" and self.isOnline:
                     self.logout(1)
                     self.isOnline = False
                     self.loginCredentials = (None, None)
@@ -101,7 +101,7 @@ class peerMain:
                         self.peerClient.tcpClientSocket.close()
                     print("Logged out successfully")
                 # is peer is not logged in and exits the program
-                elif choice == "7" and not self.isOnline:
+                elif choice == "9" and not self.isOnline:
                     self.logout(2)
                 # if choice is 4 and user is online, then user is asked
                 # for a username that is wanted to be searched
@@ -112,12 +112,28 @@ class peerMain:
                    # if user is found its ip address is shown to user
                     if searchStatus is not None and searchStatus != 0:
                         print("IP address of " + username + " is " + searchStatus)
+
                 elif choice == "3" and self.isOnline:
                     config_instance.update_online_peer()
                     print(colorama.Fore.BLUE+"Online users:")
                     for item in config_instance.onlinePeers:
                         print(colorama.Fore.BLUE+item)
 
+                elif choice == "4" and self.isOnline:
+                # This choice creates a new chatroom and saves it in the database
+                    try:
+                        roomId = input("Enter a Room ID: ")
+                        self.createRoom(roomId)
+                    except Exception:
+                        print("Please enter a valid/available room id.")
+                    print("Room Created Successfully\n")
+
+
+                elif choice == "5" and self.isOnline:
+                    config_instance.update_available_chatrooms()
+                    print(colorama.Fore.BLUE + "Chatrooms:")
+                    for item in config_instance.availableChatrooms:
+                        print(colorama.Fore.BLUE + item)
 
                 # if choice is 5 and user is online, then user is asked
                 # to enter the username of the user that is wanted to be chatted
@@ -246,6 +262,24 @@ class peerMain:
         elif response[0] == "search-user-not-found":
             print(username + " is not found")
             return None
+
+    def createRoom(self, roomId):
+
+        # join message to create an account is composed and sent to registry
+        # if response is success then informs the user for account creation
+        # if response exists then informs the user for account existence
+        message = "CREATE-ROOM " + roomId
+        logging.info("Send to " + self.registryName + ":" +
+                     str(self.registryPort) + " -> " + message)
+        self.tcpClientSocket.send(message.encode())
+        response = self.tcpClientSocket.recv(1024).decode()
+        logging.info("Received from " + self.registryName + " -> " + response)
+        if response == "create-room-success":
+            print("Chat room created successfully.")
+        elif response == "chat-room-exist":
+            print("chat room already exits")
+
+
 
     # function for sending hello message
     # a timer thread is used to send hello messages to udp socket of registry
