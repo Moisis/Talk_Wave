@@ -166,7 +166,12 @@ class ClientThread(threading.Thread):
                 # DELETE #
                 elif message[0] == "DELETE-ROOM":
                     if not config_instance.db.is_room_exist(message[1]):
-                        response = "chat-room-not-exist"
+                        response = "room-not-exist"
+                        logging.info("Send to " + self.ip + ":" + str(self.port) + " -> " + response)
+                        self.tcpClientSocket.send(response.encode())
+
+                    elif not message[2] == config_instance.db.get_first_peer(message[1]):
+                        response = "delete-room-denied"
                         logging.info("Send to " + self.ip + ":" + str(self.port) + " -> " + response)
                         self.tcpClientSocket.send(response.encode())
                     else:

@@ -147,11 +147,12 @@ class peerMain:
                 elif choice == "7" and self.isOnline:
                     try:
                         roomId = input("Enter a Room ID: ")
-                        self.deleteRoom(roomId)
+                        self.deleteRoom(roomId, username)
                         print("Room Deleted Successfully\n")
 
                     except Exception:
                         print("Please Enter a Valid Room ID.")
+
 
 
                 # if choice is 5 and user is online, then user is asked
@@ -283,7 +284,6 @@ class peerMain:
             return None
 
     def createRoom(self, roomId, username):
-
         # join message to create an account is composed and sent to registry
         # if response is success then informs the user for account creation
         # if response exists then informs the user for account existence
@@ -308,16 +308,19 @@ class peerMain:
 
         elif response == "join-exist":
             print("you are already in chatroom")
-    def deleteRoom(self, roomId):
-        message = "DELETE-ROOM " + roomId
+
+    def deleteRoom(self, roomId, username):
+        message = "DELETE-ROOM " + roomId + " " + username
         logging.info("Send to " + self.registryName + ":" + str(self.registryPort) + " -> " + message)
         self.tcpClientSocket.send(message.encode())
         response = self.tcpClientSocket.recv(1024).decode()
         logging.info("Received from " + self.registryName + " -> " + response)
         if response == "delete-room-success":
             print("Chat Room Deleted Successfully.")
-        elif response == "chat-room-not-exist":
+        elif response == "room-not-exist":
             print("Chat Room Doesn't Exist")
+        elif response == "delete-room-denied":
+            print("You have no access to delete this room.")
 
     # function for sending hello message
     # a timer thread is used to send hello messages to udp socket of registry

@@ -70,13 +70,19 @@ class DB:
             "roomId": roomId,
             "peers": [username]
         }
-
         self.db.accounts.update_one({"username": username}, {"$push": {"roomId": roomId}})
-
         self.db.rooms.insert_one(room)
 
 
-    # Store the room information in the database
+    def get_first_peer(self, roomId):
+        room = self.db.rooms.find_one({"roomId": roomId})
+        # Check if the room exists and has the 'peers' field
+        if room and 'peers' in room:
+            # Return the first element of the 'peers' field
+            return room['peers'][0]
+
+        # Return None or handle the case where the room or 'peers' field doesn't exist
+        return None    # Store the room information in the database
     def get_available_chatrooms(self):
         result_cursor = self.db.rooms.find({"roomId": {"$exists": True}})
         chatrooms = [doc['roomId'] for doc in result_cursor]
@@ -84,17 +90,18 @@ class DB:
 
     def join_room(self, roomId, username):  # add members to chatroom and update if new peer joined
         self.db.rooms.update_one(
-            {"roomId": roomId}, {"$push": {"peers": username}}
-        )
+            {"roomId": roomId}, {"$push": {"peers": username}})
         self.db.accounts.update_one(
             {"username": username}, {"$push": {"rooms": roomId}})
 
 
-    def delete_room(self, roomId):
+    def delete_room(self, roomId, username):
         # Check if the roomId exists in the database
         existing_room = self.db.rooms.find_one({"roomId": roomId})
+        if not username == self.get_first_peer(roomId):
+            print(f"{username} has no access to delete {roomId}.")
 
-        if existing_room:
+        elif existing_room:
             # Delete the room from the database
             self.db.rooms.delete_one({"roomId": roomId})
             print(f"Room with id {roomId} has been deleted.")
