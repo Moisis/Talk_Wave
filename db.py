@@ -92,6 +92,19 @@ class DB:
             {"roomId": roomId}, {"$push": {"peers": username}})
         #self.db.accounts.update_one({"username": username}, {"$push": {"rooms": roomId}})
 
+    def find_room_peer(self, roomId, username):
+        return self.db.rooms.count_documents({"roomId": roomId, "peers": username}) > 0
+
+    def leave_room(self, roomId, username):
+        room_exists = self.db.rooms.find_one({"roomId": roomId})
+        updated_peers = [
+            user
+            for user in room_exists.get("peers", [])
+            if not user == username
+        ]
+        self.db.rooms.update_one(
+            {"roomId": roomId},
+            {'$set': {'peers': updated_peers}})
 
     def delete_room(self, roomId, username):
         # Check if the roomId exists in the database

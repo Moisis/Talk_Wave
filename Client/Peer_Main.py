@@ -50,15 +50,15 @@ class peerMain:
 
         try:
             # as long as the user is not logged out, asks to select an option in the menu
-            while choice != "9":
+            while choice != "77":
                 # menu selection prompt
                 if not self.isOnline:
                     choice = input(colorama.Fore.CYAN +
-                        "Welcome!\nChoose: \n1.Create account\n2.Login\n9.Exit\n")
+                        "Welcome!\nChoose: \n1.Create account\n2.Login\n77.Exit\n")
                 else:
 
                     choice = input(colorama.Fore.CYAN +
-                        "Choose: \n1.Search\n2.Start a chat\n3.Show Online Users\n4.Create Chatroom\n5.Display available rooms\n6.Join Room\n7.Delete Room\n8.Logout\n")
+                        "Choose: \n1.Search\n2.Start a chat\n3.Show Online Users\n4.Create Chatroom\n5.Display available rooms\n6.Join Room\n7.Delete Room\n8.Leave Room\n9.Logout\n")
                 # if choice is 1, creates an account with the username
                 # and password entered by the user
                 if choice == "1" and not self.isOnline:
@@ -91,7 +91,7 @@ class peerMain:
 
                 # if choice is 3 and user is logged in, then user is logged out
                 # and peer variables are set, and server and client sockets are closed
-                elif choice == "8" and self.isOnline:
+                elif choice == "9" and self.isOnline:
                     self.logout(1)
                     self.isOnline = False
                     self.loginCredentials = (None, None)
@@ -101,7 +101,7 @@ class peerMain:
                         self.peerClient.tcpClientSocket.close()
                     print("Logged out successfully")
                 # is peer is not logged in and exits the program
-                elif choice == "9" and not self.isOnline:
+                elif choice == "77" and not self.isOnline:
                     self.logout(2)
                 # if choice is 4 and user is online, then user is asked
                 # for a username that is wanted to be searched
@@ -142,6 +142,11 @@ class peerMain:
                     roomId = input("Enter a Room ID: ")
                     self.deleteRoom(roomId, username)
                     #print("Room Deleted Successfully\n")
+
+                elif choice == "8" and self.isOnline:
+                    roomId = input("Enter a Room ID: ")
+                    self.leaveRoom(roomId, username)
+
 
                 # if choice is 5 and user is online, then user is asked
                 # to enter the username of the user that is wanted to be chatted
@@ -296,6 +301,18 @@ class peerMain:
 
         elif response == "join-exist":
             print("you are already in chatroom")
+
+    def leaveRoom (self, roomId, username):
+        message = "LEAVE-ROOM " + roomId + " " + username
+        logging.info("Send to " + self.registryName + ":" + str(self.registryPort) + " -> " + message)
+        self.tcpClientSocket.send(message.encode())
+        response = self.tcpClientSocket.recv(1024).decode()
+        logging.info("Received from " + self.registryName + " -> " + response)
+        if response == "leave-success":
+            print(f"Left {roomId} successfully")
+
+        elif response == "leave-not-valid":
+            print("You are not in this chatroom")
 
     def deleteRoom(self, roomId, username):
         message = "DELETE-ROOM " + roomId + " " + username

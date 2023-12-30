@@ -162,6 +162,20 @@ class ClientThread(threading.Thread):
                         self.tcpClientSocket.send(response.encode())
 
 
+                elif message[0]== "LEAVE-ROOM":
+                    roomId = message[1]
+                    username = message[2]
+                    if config_instance.db.find_room_peer(roomId, username):
+                    # Leave the chatroom
+                        config_instance.db.leave_room(roomId, username)
+                        print(f"{username} left the chatroom {roomId} successfully.")
+                        response = "leave-success"
+                        self.tcpClientSocket.send(response.encode())
+                    else:
+                        print(f"{username} is not in the chatroom {roomId}.")
+                        response = "leave-not-valid"
+                        self.tcpClientSocket.send(response.encode())
+
 
                 # DELETE #
                 elif message[0] == "DELETE-ROOM":
