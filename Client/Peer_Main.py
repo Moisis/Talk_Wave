@@ -58,7 +58,7 @@ class peerMain:
                 else:
 
                     choice = input(colorama.Fore.CYAN +
-                        "Choose: \n1.Search\n2.Start a chat\n3.Show Online Users\n4.Create Chatroom\n5.Display available rooms\n6.Hatb2a Join\n7.Hatb2a Delete\n8.Logout\n")
+                        "Choose: \n1.Search\n2.Start a chat\n3.Show Online Users\n4.Create Chatroom\n5.Display available rooms\n6.Join Room\n7.Delete Room\n8.Logout\n")
                 # if choice is 1, creates an account with the username
                 # and password entered by the user
                 if choice == "1" and not self.isOnline:
