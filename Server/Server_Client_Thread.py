@@ -142,13 +142,15 @@ class ClientThread(threading.Thread):
                         logging.info("Send to " + self.ip + ":" + str(self.port) + " -> " + response)
                         self.tcpClientSocket.send(response.encode())
 
+                # JOIN ROOM #
                 elif message[0] == "JOIN-ROOM":
                     print("Welcome!")
                     roomId = message[1]
                     print(f"RoomID = {roomId}")
 
                     if config_instance.db.is_room_exist(roomId):
-                        config_instance.db.join_room(roomId,message[2])
+
+                        config_instance.db.join_room(roomId, message[2])
                         response = "join-success"
                         logging.info("Send to " + self.ip + ":" + str(self.port) + " -> " + str(response))
                         self.tcpClientSocket.send(response.encode())
