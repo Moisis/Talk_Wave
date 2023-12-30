@@ -121,11 +121,8 @@ class peerMain:
 
                 elif choice == "4" and self.isOnline:
                 # This choice creates a new chatroom and saves it in the database
-                    try:
-                        roomId = input("Enter a Room ID: ")
-                        self.createRoom(roomId, username)
-                    except Exception:
-                        print("Please Enter a Valid Room ID.")
+                    roomId = input("Enter a Room ID: ")
+                    self.createRoom(roomId, username)
 
 
                 elif choice == "5" and self.isOnline:
@@ -135,25 +132,16 @@ class peerMain:
                         print(colorama.Fore.BLUE + item)
 
                 elif choice == "6" and self.isOnline:
-                    try:
-                        roomId = input("Enter a Room ID: ")
-                        self.joinRoom(roomId, username)
-                        print("Room Joined Successfully\n")
 
-                    except Exception:
-                        print("Please Enter a Valid Room ID.")
+                    roomId = input("Enter a Room ID: ")
+                    self.joinRoom(roomId, username)
+
 
 
                 elif choice == "7" and self.isOnline:
-                    try:
-                        roomId = input("Enter a Room ID: ")
-                        self.deleteRoom(roomId, username)
-                        print("Room Deleted Successfully\n")
-
-                    except Exception:
-                        print("Please Enter a Valid Room ID.")
-
-
+                    roomId = input("Enter a Room ID: ")
+                    self.deleteRoom(roomId, username)
+                    #print("Room Deleted Successfully\n")
 
                 # if choice is 5 and user is online, then user is asked
                 # to enter the username of the user that is wanted to be chatted

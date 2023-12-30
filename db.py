@@ -59,7 +59,7 @@ class DB:
         return res["ip"], res["port"]
 
     def is_room_exist(self, roomId):
-        return bool(self.db.rooms.find_one({'roomId': roomId}))
+        return bool(self.db.rooms.find_one({"roomId": roomId}))
 
     def register_room(self, roomId, username):
     # Check if the roomId already exists in the database
@@ -69,7 +69,7 @@ class DB:
             "roomId": roomId,
             "peers": [username]
         }
-        self.db.accounts.update_one({"username": username}, {"$push": {"roomId": roomId}})
+        #self.db.accounts.update_one({"username": username}, {"$push": {"roomId": roomId}})
         self.db.rooms.insert_one(room)
 
 

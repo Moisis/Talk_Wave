@@ -13,6 +13,7 @@ class ConfigServerThis:
     # # tcpThreads list for online client's thread
     tcpThreads = {}
 
+    rooms = {}
     # tcp and udp server port initializations
     def __init__(self):
         self.onlinePeers = {}
