@@ -90,8 +90,7 @@ class DB:
     def join_room(self, roomId, username):  # add members to chatroom and update if new peer joined
         self.db.rooms.update_one(
             {"roomId": roomId}, {"$push": {"peers": username}})
-        self.db.accounts.update_one(
-            {"username": username}, {"$push": {"rooms": roomId}})
+        #self.db.accounts.update_one({"username": username}, {"$push": {"rooms": roomId}})
 
 
     def delete_room(self, roomId, username):
