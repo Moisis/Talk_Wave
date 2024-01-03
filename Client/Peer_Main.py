@@ -302,6 +302,9 @@ class peerMain:
         elif response == "join-exist":
             print("you are already in chatroom")
 
+        elif response == "room-not-exist":
+            print("Chat Room Doesn't Exist")
+
     def leaveRoom (self, roomId, username):
         message = "LEAVE-ROOM " + roomId + " " + username
         logging.info("Send to " + self.registryName + ":" + str(self.registryPort) + " -> " + message)

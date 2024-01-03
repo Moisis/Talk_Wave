@@ -149,15 +149,20 @@ class ClientThread(threading.Thread):
                     print(f"RoomID = {roomId}")
 
                     if config_instance.db.is_room_exist(roomId):
+                        if config_instance.db.find_room_peer(roomId, message[2]):
+                            response = "join-exist"
+                            print("From-> " + self.ip + ":" + str(self.port) + " " + response)
+                            logging.info("Send to " + self.ip + ":" + str(self.port) + " -> " + response)
+                            self.tcpClientSocket.send(response.encode())
 
-                        config_instance.db.join_room(roomId, message[2])
-                        response = "join-success"
-                        logging.info("Send to " + self.ip + ":" + str(self.port) + " -> " + str(response))
-                        self.tcpClientSocket.send(response.encode())
+                        else:
+                            config_instance.db.join_room(roomId, message[2])
+                            response = "join-success"
+                            logging.info("Send to " + self.ip + ":" + str(self.port) + " -> " + str(response))
+                            self.tcpClientSocket.send(response.encode())
 
                     else:
-                        response = "join-exist"
-                        print("From-> " + self.ip + ":" + str(self.port) + " " + response)
+                        response = "room-not-exist"
                         logging.info("Send to " + self.ip + ":" + str(self.port) + " -> " + response)
                         self.tcpClientSocket.send(response.encode())
 
