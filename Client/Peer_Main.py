@@ -160,7 +160,7 @@ class peerMain:
                                 for user in self.ChatRoomUsers:
                                     # Don't send a message to the same user
                                     if user != username:
-                                        self.initiate_ChatRoom(user, message)
+                                        self.Start_ChatRoom(user, message)
 
 
 
@@ -198,8 +198,10 @@ class peerMain:
                     okMessage = "OK " + self.loginCredentials[0]
                     logging.info("Send to " + self.peerServer.connectedPeerIP + " -> " + okMessage)
                     self.peerServer.connectedPeerSocket.send(okMessage.encode())
+                    self.peerServer.inChatRoom = False
                     self.peerClient = PeerClient(self.peerServer.connectedPeerIP, self.peerServer.connectedPeerPort,
-                                                 self.loginCredentials[0], self.peerServer, "OK")
+                                                 self.loginCredentials[0], self.peerServer, "OK", "ALOOOO")
+
                     self.peerClient.start()
                     self.peerClient.join()
                 # if user rejects the chat request then reject message is sent to the requester side
@@ -311,48 +313,6 @@ class peerMain:
                 print(username + " is not found")
                 return None
 
-    # def createRoom(self, roomId):
-    #     # join message to create an account is composed and sent to registry
-    #     # if response is success then informs the user for account creation
-    #     # if response exists then informs the user for account existence
-    #     message = "CREATE-ROOM " + roomId    ##+ " " + username + " " + str(port)
-    #     logging.info("Send to " + self.registryName + ":" + str(self.registryPort) + " -> " + message)
-    #     self.tcpClientSocket.send(message.encode())
-    #     response = self.tcpClientSocket.recv(1024).decode()
-    #     logging.info("Received from " + self.registryName + " -> " + response)
-    #     if response[0] == "create-room-success":
-    #         print("Chat Room Created Successfully.")
-    #         ## CHATTING BITCH
-    #         # searchStatus = self.searchUser(username)
-    #         # # if searched user is found, then its ip address and port number is retrieved
-    #         # # and a client thread is created
-    #         # # main process waits for the client thread to finish its chat
-    #         # if searchStatus is not None and searchStatus != 0:
-    #         #     searchStatus = searchStatus.split(":")
-    #         #     self.peerClient = PeerClient(searchStatus[0], int(searchStatus[1]), self.loginCredentials[0],
-    #         #                                  self.peerServer, None)
-    #         #     self.peerClient.start()
-    #         #     self.peerClient.join()
-    #         # self.chatroom = ChatServer(self.peerServerPort, self.registryName)
-    #         # # self.chatroom.run()
-    #         # self.chatroom.run()
-    #         # Start the chat room serverc
-    #
-    #         self.peerServer.inChatRoom = True
-    #         # # Usage in peerMain
-    #         # self.chat_room = ChatServer(self.peerServerPort, roomId, self.registryName)
-    #         # self.chat_room_thread = threading.Thread(target=self.chat_room.run)
-    #         # self.chat_room_thread.start()
-    #         #
-    #         # # Start the client for the chat room
-    #         # self.peerClient = PeerClient(self.registryName, self.peerServerPort, username,
-    #         #                              self.peerServer, "ChatRoom")
-    #         # self.peerClient.start()
-    #         # self.peerClient.join()
-    #     elif response[0] == "chat-room-exist":
-    #         print("Chat Room Already Exists")
-    #         return 0
-
     def updateChatRoomUsersList(self, ChatRoom_Name):
         if self.isOnline:
             # Send a request to the registry to get the Chat Room  Users update
@@ -364,7 +324,7 @@ class peerMain:
             updatedChatRoomUsersList = response[1:]
             return updatedChatRoomUsersList
 
-    def initiate_ChatRoom(self, username, message):
+    def Start_ChatRoom(self, username, message):
         SearchStatus = self.searchUser(username, "Chat-Room")
         # if searched user is found, then its ip address and port number is retrieved
         # and a client thread is created
@@ -381,12 +341,11 @@ class peerMain:
         message = "CREATE-ROOM " + ChatRoom_Name
         self.tcpClientSocket.send(message.encode())
         response = self.tcpClientSocket.recv(1024).decode().split()
-        if response[0] == "ChatRoom-Exist":
-            print(f"{colorama.Fore.RED}This Chat Room {ChatRoom_Name} already exist ... Choose another name")
+        if response[0] == "chat-room-exist":
+            print(f"{colorama.Fore.RED}This Chat Room {ChatRoom_Name} already exist Try Again ")
             return 0
         elif response[0] == "create-room-success":
             print(f"{colorama.Fore.YELLOW}The Chat Room {ChatRoom_Name} is created Successfully ")
-            self.peerServer.inChatRoom = True
 
         # Function for Joining a Chat Room
 
@@ -409,39 +368,22 @@ class peerMain:
                 self.ChatRoomUsers.append(user)
             if self.ChatRoomUsers != None:
                 for user in self.ChatRoomUsers:
-                    self.initiate_ChatRoom(user,
-                                           f"User {self.loginCredentials[0]} has joined the {ChatRoom_Name} Chat Room")
+                    self.Start_ChatRoom(user,
+                                        f"User {self.loginCredentials[0]} has joined the {ChatRoom_Name} Chat Room")
         elif response == "join-exist":
             print("you are already in chatroom")
-
-        elif response == "room-not-exist":
-            print("Chat Room Doesn't Exist")
-
-        # Exiting the chat room
-    # def exitChatRoom(self, username, ChatRoom_Name):
-    #         if self.ChatRoomUsers != None:
-    #             for user in self.ChatRoomUsers:
-    #                 self.initiate_ChatRoom(user, f"{colorama.Fore.RED}User {username} has left the room")
-    #         message = "LEAVE-ROOM " + username + " " + ChatRoom_Name
-    #         self.tcpClientSocket.send(message.encode())
-    #         response = self.tcpClientSocket.recv(1024).decode().split()
-    #         if response[0] == "leave-success":
-    #             print(f"{colorama.Fore.RED} You have left the chat room")
-    #             self.peerServer.inChatroom = False
-    #             return 0
-    #         elif response == "leave-not-valid":
-    #             print("You are not in this chatroom")
 
     def leaveRoom(self, username, ChatRoom_Name):
         if self.ChatRoomUsers != None:
             for user in self.ChatRoomUsers:
-                self.initiate_ChatRoom(user, f"{colorama.Fore.RED}User {username} has left the room")
+                self.Start_ChatRoom(user, f"{colorama.Fore.RED}User {username} has left the room")
         message = "LEAVE-ROOM " + username + " " + ChatRoom_Name
         self.tcpClientSocket.send(message.encode())
         response = self.tcpClientSocket.recv(1024).decode().split()
         if response[0] == "leave-success":
             print(f"{colorama.Fore.RED} You have left the chat room")
             self.peerServer.inChatroom = False
+            self.peerServer.mode2 = "aloo"
             return 0
         elif response == "leave-not-valid":
             print("You are not in this chatroom")

@@ -18,6 +18,9 @@ class PeerClient(threading.Thread):
         self.tcpClientSocket = socket(AF_INET, SOCK_STREAM)
         # keeps the server of this client
         self.peerServer = peerServer
+
+        self.peerServer.mode2 = mode
+
         # keeps the phrase that is used when creating the client
         # if the client is created with a phrase, it means this one received the request
         # this phrase should be none if this is the client of the requester peer
@@ -30,7 +33,7 @@ class PeerClient(threading.Thread):
 
     # main method of the peer client thread
     def run(self):
-        print("Client client started...")
+        # print("Client client started...")
         # connects to the server of other peer
         self.tcpClientSocket.connect((self.ipToConnect, self.portToConnect))
         if self.mode == "ChatRoom":

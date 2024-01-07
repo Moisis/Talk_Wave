@@ -2,6 +2,7 @@ from socket import *
 import threading
 import logging
 import select
+from messageformatter import  format_text
 
 
 # Server side of peer
@@ -30,7 +31,9 @@ class PeerServer(threading.Thread):
         # keeps the username of the peer that this peer is chatting with
         self.chattingClientName = None
 
-        if roomid == None:
+        self.mode2 = "lol"
+
+        if roomid is None:
             self.inChatRoom = False
         else:
             self.inChatRoom = True
@@ -82,16 +85,16 @@ class PeerServer(threading.Thread):
                     # if the socket that receives the data is the one that
                     # is used to communicate with a connected peer, then enters here
                     else:
-                        if self.inChatRoom:
-                            # message is received from connected peer
-                            messageReceived2 = s.recv(1024).decode()
-                            FindIndication = messageReceived2.find("ChatRoom ")
+                        # message is received from connected peer
+                        messageReceived = format_text(s.recv(1024).decode())
+                        if self.mode2 == "ChatRoom":
+                            FindIndication = messageReceived.find("ChatRoom ")
                             if FindIndication != -1:
-                                if len(messageReceived2) != 0:
-                                    print(messageReceived2)
+                                if len(messageReceived) != 0:
+                                    print(messageReceived)
                                     continue
                                     # logs the received message
-                            logging.info("Received from " + str(self.connectedPeerIP) + " -> " + str(messageReceived2))
+                            logging.info("Received from " + str(self.connectedPeerIP) + " -> " + str(messageReceived))
 
                         # if message is a request message it means that this is the receiver side peer server
                         # so evaluate the chat request
