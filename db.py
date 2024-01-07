@@ -61,17 +61,25 @@ class DB:
     def is_room_exist(self, roomId):
         return bool(self.db.rooms.find_one({"roomId": roomId}))
 
-    def register_room(self, roomId, username):
-    # Check if the roomId already exists in the database
+    def register_room(self, roomId):
+        # Check if the roomId already exists in the database
         if self.db.rooms.find_one({"roomId": roomId}):
             raise ValueError(f"Room with id {roomId} already exists.")
         room = {
             "roomId": roomId,
-            "peers": [username]
+            "peers": [],
+
         }
-        #self.db.accounts.update_one({"username": username}, {"$push": {"roomId": roomId}})
+        # self.db.accounts.update_one({"username": username}, {"$push": {"roomId": roomId}})
         self.db.rooms.insert_one(room)
 
+    # def get_room_port(self, roomId):
+    #     room = self.db.rooms.find_one({"roomId": roomId})
+    #     if self.is_room_exist(roomId) :
+    #         # Return the first element of the 'peers' field
+    #         return room["admin_port"]
+    #         # Return None or handle the case where the room or 'peers' field doesn't exist
+    #     return None
 
     def get_first_peer(self, roomId):
         room = self.db.rooms.find_one({"roomId": roomId})
@@ -80,7 +88,16 @@ class DB:
             # Return the first element of the 'peers' field
             return room["peers"][0]
         # Return None or handle the case where the room or 'peers' field doesn't exist
-        return None    # Store the room information in the database
+        return None  # Store the room information in the database
+
+    def get_room_peers(self, roomId):
+        room = self.db.rooms.find_one({"roomId": roomId})
+        # Check if the room exists and has the 'peers' field
+        if room and "peers" in room:
+            # Return the first element of the 'peers' field
+            return room["peers"]
+        # Return None or handle the case where the room or 'peers' field doesn't exist
+        return None  # Store the room information in the database
 
     def get_available_chatrooms(self):
         result_cursor = self.db.rooms.find({"roomId": {"$exists": True}})
@@ -90,7 +107,7 @@ class DB:
     def join_room(self, roomId, username):  # add members to chatroom and update if new peer joined
         self.db.rooms.update_one(
             {"roomId": roomId}, {"$push": {"peers": username}})
-        #self.db.accounts.update_one({"username": username}, {"$push": {"rooms": roomId}})
+        # self.db.accounts.update_one({"username": username}, {"$push": {"rooms": roomId}})
 
     def find_room_peer(self, roomId, username):
         return self.db.rooms.count_documents({"roomId": roomId, "peers": username}) > 0
@@ -105,6 +122,15 @@ class DB:
         self.db.rooms.update_one(
             {"roomId": roomId},
             {'$set': {'peers': updated_peers}})
+
+        # Checks if the Chat Room exists or not
+
+    def does_ChatRoom_Exists(self, ChatRoom_Name):
+        ChatRoom_Exists = self.db.ChatRooms.find_one({"roomId": ChatRoom_Name})
+        if ChatRoom_Exists != None:
+            return True
+        else:
+            return False
 
     def delete_room(self, roomId, username):
         # Check if the roomId exists in the database

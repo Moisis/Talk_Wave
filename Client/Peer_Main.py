@@ -1,3 +1,4 @@
+import ast
 import hashlib
 from socket import *
 import threading
@@ -17,6 +18,7 @@ class peerMain:
 
     # peer initializations
     def __init__(self):
+
         colorama.init(autoreset=True)
         # ip address of the registry
         self.registryName = gethostname()
@@ -43,6 +45,11 @@ class peerMain:
         # timer initialization
         self.timer = None
 
+        # Track the users in the Chat Room
+        self.ChatRoomUsers = []
+        # Track the name of the Chat Room
+        self.roomid = ''
+
         choice = "0"
 
         # log file initialization
@@ -54,23 +61,25 @@ class peerMain:
                 # menu selection prompt
                 if not self.isOnline:
                     choice = input(colorama.Fore.CYAN +
-                        "Welcome!\nChoose: \n1.Create account\n2.Login\n77.Exit\n")
+                                   "Welcome!\nChoose: \n1.Create account\n2.Login\n77.Exit\n")
                 else:
 
                     choice = input(colorama.Fore.CYAN +
-                        "Choose: \n1.Search\n2.Start a chat\n3.Show Online Users\n4.Create Chatroom\n5.Display available rooms\n6.Join Room\n7.Delete Room\n8.Leave Room\n9.Logout\n")
+                                   "Choose: \n1.Search\n2.Start a chat\n3.Show Online Users\n4.Create "
+                                   "Chatroom\n5.Display available rooms\n6.Join Room\n7.Delete Room\n8.Leave "
+                                   "Room\n9.Logout\n")
                 # if choice is 1, creates an account with the username
                 # and password entered by the user
                 if choice == "1" and not self.isOnline:
-                    username = input(colorama.Fore.LIGHTYELLOW_EX+"username: ")
-                    password = input(colorama.Fore.LIGHTYELLOW_EX+"password: ")
+                    username = input(colorama.Fore.LIGHTYELLOW_EX + "username: ")
+                    password = input(colorama.Fore.LIGHTYELLOW_EX + "password: ")
 
                     self.createAccount(username, hashlib.sha3_256(password.encode()).hexdigest())
                 # if choice is 2 and user is not logged in, asks for the username
                 # and the password to login
                 elif choice == "2" and not self.isOnline:
-                    username = input(colorama.Fore.LIGHTYELLOW_EX+"username: ")
-                    password = input(colorama.Fore.LIGHTYELLOW_EX+"password: ")
+                    username = input(colorama.Fore.LIGHTYELLOW_EX + "username: ")
+                    password = input(colorama.Fore.LIGHTYELLOW_EX + "password: ")
 
                     # assigns port to peer
                     sock = socket()
@@ -84,7 +93,7 @@ class peerMain:
                         self.loginCredentials = (username, password)
                         self.peerServerPort = peerServerPort
                         # creates the server thread for this peer, and runs it
-                        self.peerServer = PeerServer(self.loginCredentials[0], self.peerServerPort)
+                        self.peerServer = PeerServer(self.loginCredentials[0], self.peerServerPort, self.roomid)
                         self.peerServer.start()
                         # hello message is sent to registry
                         self.sendHelloMessage()
@@ -106,23 +115,28 @@ class peerMain:
                 # if choice is 4 and user is online, then user is asked
                 # for a username that is wanted to be searched
                 elif choice == "1" and self.isOnline:
-                    username = input(colorama.Fore.LIGHTYELLOW_EX+"Username to be searched: ")
-                    searchStatus = self.searchUser(username)
+                    username = input(colorama.Fore.LIGHTYELLOW_EX + "Username to be searched: ")
+                    searchStatus = self.searchUser(username, None)
 
-                   # if user is found its ip address is shown to user
+                    # if user is found its ip address is shown to user
                     if searchStatus is not None and searchStatus != 0:
                         print("IP address of " + username + " is " + searchStatus)
 
                 elif choice == "3" and self.isOnline:
                     config_instance.update_online_peer()
-                    print(colorama.Fore.BLUE+"Online users:")
+                    print(colorama.Fore.BLUE + "Online users:")
                     for item in config_instance.onlinePeers:
-                        print(colorama.Fore.BLUE+item)
+                        print(colorama.Fore.BLUE + item)
+
+                # Handle chat room-related choices
 
                 elif choice == "4" and self.isOnline:
-                # This choice creates a new chatroom and saves it in the database
+
                     roomId = input("Enter a Room ID: ")
-                    self.createRoom(roomId, username)
+                    # print(self.loginCredentials[0])
+                    # self.createRoom(roomId, self.loginCredentials[0], self.peerServerPort)
+                    self.createChatRoom(roomId)
+
 
 
                 elif choice == "5" and self.isOnline:
@@ -133,15 +147,27 @@ class peerMain:
 
                 elif choice == "6" and self.isOnline:
 
-                    roomId = input("Enter a Room ID: ")
-                    self.joinRoom(roomId, username)
+                    ChatRoom_Name = input("Join Chat Room: ")
+                    self.joinChatRoom(ChatRoom_Name)
+                    while self.peerServer.inChatRoom:
+                        message = input(f"{username}" + " : ")
+                        self.ChatRoomUsers = self.updateChatRoomUsersList(ChatRoom_Name)
+                        if self.ChatRoomUsers is not None:
+                            if message == ":q":
+                                self.leaveRoom(username, ChatRoom_Name)
+                                break
+                            else:
+                                for user in self.ChatRoomUsers:
+                                    # Don't send a message to the same user
+                                    if user != username:
+                                        self.initiate_ChatRoom(user, message)
 
 
 
                 elif choice == "7" and self.isOnline:
                     roomId = input("Enter a Room ID: ")
                     self.deleteRoom(roomId, username)
-                    #print("Room Deleted Successfully\n")
+                    # print("Room Deleted Successfully\n")
 
                 elif choice == "8" and self.isOnline:
                     roomId = input("Enter a Room ID: ")
@@ -151,15 +177,16 @@ class peerMain:
                 # if choice is 5 and user is online, then user is asked
                 # to enter the username of the user that is wanted to be chatted
                 elif choice == "2" and self.isOnline:
-                    username = input(colorama.Fore.LIGHTYELLOW_EX+"Enter the username of user to start chat: ")
-                    searchStatus = self.searchUser(username)
+                    username = input(colorama.Fore.LIGHTYELLOW_EX + "Enter the username of user to start chat: ")
+                    searchStatus = self.searchUser(username, None)
                     # if searched user is found, then its ip address and port number is retrieved
                     # and a client thread is created
                     # main process waits for the client thread to finish its chat
                     if searchStatus is not None and searchStatus != 0:
                         searchStatus = searchStatus.split(":")
                         self.peerClient = PeerClient(searchStatus[0], int(searchStatus[1]), self.loginCredentials[0],
-                                                     self.peerServer, None)
+                                                     self.peerServer, None, "allo")
+
                         self.peerClient.start()
                         self.peerClient.join()
                 # if this is the receiver side then it will get the prompt to accept an incoming request during the main loop
@@ -218,9 +245,9 @@ class peerMain:
         response = self.tcpClientSocket.recv(1024).decode()
         logging.info("Received from " + self.registryName + " -> " + response)
         if response == "join-success":
-            print(colorama.Fore.GREEN+"Account created...")
+            print(colorama.Fore.GREEN + "Account created...")
         elif response == "join-exist":
-            print(colorama.Fore.RED+"choose another username or login...")
+            print(colorama.Fore.RED + "choose another username or login...")
 
     # login function
     def login(self, username, password, peerServerPort):
@@ -232,16 +259,16 @@ class peerMain:
         response = self.tcpClientSocket.recv(1024).decode()
         logging.info("Received from " + self.registryName + " -> " + response)
         if response == "login-success":
-            print(colorama.Fore.GREEN+"Logged in successfully...")
+            print(colorama.Fore.GREEN + "Logged in successfully...")
             return 1
         elif response == "login-account-not-exist":
-            print(colorama.Fore.RED+"Account does not exist...")
+            print(colorama.Fore.RED + "Account does not exist...")
             return 0
         elif response == "login-online":
             print("Account is already online...")
             return 2
         elif response == "login-wrong-password":
-            print(colorama.Fore.RED+"Wrong password...")
+            print(colorama.Fore.RED + "Wrong password...")
             return 3
 
     # logout function
@@ -257,7 +284,7 @@ class peerMain:
         self.tcpClientSocket.send(message.encode())
 
     # function for searching an online user
-    def searchUser(self, username):
+    def searchUser(self, username, mode):
         # a search message is composed and sent to registry
         # custom value is returned according to each response
         # to this search message
@@ -266,54 +293,156 @@ class peerMain:
         self.tcpClientSocket.send(message.encode())
         response = self.tcpClientSocket.recv(1024).decode().split()
         logging.info("Received from " + self.registryName + " -> " + " ".join(response))
-        if response[0] == "search-success":
-            print(username + " is found successfully...")
-            return response[1]
-        elif response[0] == "search-user-not-online":
-            print(username + " is not online...")
+        if mode == "Chat-Room":
+            if response[0] == "search-success":
+                return response[1]
+            elif response[0] == "search-user-not-online":
+                return 0
+            elif response[0] == "search-user-not-found":
+                return None
+        else:
+            if response[0] == "search-success":
+                print(username + " is found successfully...")
+                return response[1]
+            elif response[0] == "search-user-not-online":
+                print(username + " is not online...")
+                return 0
+            elif response[0] == "search-user-not-found":
+                print(username + " is not found")
+                return None
+
+    # def createRoom(self, roomId):
+    #     # join message to create an account is composed and sent to registry
+    #     # if response is success then informs the user for account creation
+    #     # if response exists then informs the user for account existence
+    #     message = "CREATE-ROOM " + roomId    ##+ " " + username + " " + str(port)
+    #     logging.info("Send to " + self.registryName + ":" + str(self.registryPort) + " -> " + message)
+    #     self.tcpClientSocket.send(message.encode())
+    #     response = self.tcpClientSocket.recv(1024).decode()
+    #     logging.info("Received from " + self.registryName + " -> " + response)
+    #     if response[0] == "create-room-success":
+    #         print("Chat Room Created Successfully.")
+    #         ## CHATTING BITCH
+    #         # searchStatus = self.searchUser(username)
+    #         # # if searched user is found, then its ip address and port number is retrieved
+    #         # # and a client thread is created
+    #         # # main process waits for the client thread to finish its chat
+    #         # if searchStatus is not None and searchStatus != 0:
+    #         #     searchStatus = searchStatus.split(":")
+    #         #     self.peerClient = PeerClient(searchStatus[0], int(searchStatus[1]), self.loginCredentials[0],
+    #         #                                  self.peerServer, None)
+    #         #     self.peerClient.start()
+    #         #     self.peerClient.join()
+    #         # self.chatroom = ChatServer(self.peerServerPort, self.registryName)
+    #         # # self.chatroom.run()
+    #         # self.chatroom.run()
+    #         # Start the chat room serverc
+    #
+    #         self.peerServer.inChatRoom = True
+    #         # # Usage in peerMain
+    #         # self.chat_room = ChatServer(self.peerServerPort, roomId, self.registryName)
+    #         # self.chat_room_thread = threading.Thread(target=self.chat_room.run)
+    #         # self.chat_room_thread.start()
+    #         #
+    #         # # Start the client for the chat room
+    #         # self.peerClient = PeerClient(self.registryName, self.peerServerPort, username,
+    #         #                              self.peerServer, "ChatRoom")
+    #         # self.peerClient.start()
+    #         # self.peerClient.join()
+    #     elif response[0] == "chat-room-exist":
+    #         print("Chat Room Already Exists")
+    #         return 0
+
+    def updateChatRoomUsersList(self, ChatRoom_Name):
+        if self.isOnline:
+            # Send a request to the registry to get the Chat Room  Users update
+            message = "Get_ChatRoom_UsersList " + ChatRoom_Name
+            self.tcpClientSocket.send(message.encode())
+            response = self.tcpClientSocket.recv(1024).decode().split()
+            # Process the received chat room list
+        if response[0] == "ChatRoom_Userlist":
+            updatedChatRoomUsersList = response[1:]
+            return updatedChatRoomUsersList
+
+    def initiate_ChatRoom(self, username, message):
+        SearchStatus = self.searchUser(username, "Chat-Room")
+        # if searched user is found, then its ip address and port number is retrieved
+        # and a client thread is created
+        # main process waits for the client thread to finish its chat
+        if SearchStatus is not None:
+            SearchStatus = SearchStatus.split(":")
+            self.peerClient = PeerClient(SearchStatus[0], int(SearchStatus[1]), self.loginCredentials[0],
+                                         self.peerServer, None, "ChatRoom", message, username)
+            self.peerClient.start()
+            self.peerClient.join()
+
+    # Function for creating a Chat Room
+    def createChatRoom(self, ChatRoom_Name):
+        message = "CREATE-ROOM " + ChatRoom_Name
+        self.tcpClientSocket.send(message.encode())
+        response = self.tcpClientSocket.recv(1024).decode().split()
+        if response[0] == "ChatRoom-Exist":
+            print(f"{colorama.Fore.RED}This Chat Room {ChatRoom_Name} already exist ... Choose another name")
             return 0
-        elif response[0] == "search-user-not-found":
-            print(username + " is not found")
-            return None
+        elif response[0] == "create-room-success":
+            print(f"{colorama.Fore.YELLOW}The Chat Room {ChatRoom_Name} is created Successfully ")
+            self.peerServer.inChatRoom = True
 
-    def createRoom(self, roomId, username):
-        # join message to create an account is composed and sent to registry
-        # if response is success then informs the user for account creation
-        # if response exists then informs the user for account existence
-        message = "CREATE-ROOM " + roomId + " " + username
-        logging.info("Send to " + self.registryName + ":" + str(self.registryPort) + " -> " + message)
+        # Function for Joining a Chat Room
+
+    def joinChatRoom(self, ChatRoom_Name):
+        message = "JOIN-ROOM " + ChatRoom_Name + " " + self.loginCredentials[0]
         self.tcpClientSocket.send(message.encode())
-        response = self.tcpClientSocket.recv(1024).decode()
-        logging.info("Received from " + self.registryName + " -> " + response)
-        if response == "create-room-success":
-            print("Chat Room Created Successfully.")
-        elif response == "chat-room-exist":
-            print("Chat Room Already Exists")
+        response = self.tcpClientSocket.recv(1024).decode().split()
+        if response[0] == "room-not-exist":
+            print(f"{colorama.Fore.YELLOW} Chat Room {ChatRoom_Name} is not found")
+            return 0
+        elif response[0] == "join-success":
+            print(f"{colorama.Fore.YELLOW} Joined Chat Room {ChatRoom_Name} successfully\n")
+            self.peerServer.inChatRoom = True
+            self.roomid = ChatRoom_Name
+            # This for loop is for showing the users in Chat Room
+            print(f"{colorama.Fore.CYAN}Current Online users in this Chat Room {ChatRoom_Name} are : \n")
 
-    def joinRoom(self, roomId, username):
-        message = "JOIN-ROOM " + roomId + " " + username
-        logging.info("Send to " + self.registryName + ":" + str(self.registryPort) + " -> " + message)
-        self.tcpClientSocket.send(message.encode())
-        response = self.tcpClientSocket.recv(1024).decode()
-        logging.info("Received from " + self.registryName + " -> " + response)
-        if response == "join-success":
-            print(f"joined {roomId} successfully")
-
+            for user in (self.updateChatRoomUsersList(ChatRoom_Name)):
+                print(f"{colorama.Fore.CYAN}{user}")
+                self.ChatRoomUsers.append(user)
+            if self.ChatRoomUsers != None:
+                for user in self.ChatRoomUsers:
+                    self.initiate_ChatRoom(user,
+                                           f"User {self.loginCredentials[0]} has joined the {ChatRoom_Name} Chat Room")
         elif response == "join-exist":
             print("you are already in chatroom")
 
         elif response == "room-not-exist":
             print("Chat Room Doesn't Exist")
 
-    def leaveRoom (self, roomId, username):
-        message = "LEAVE-ROOM " + roomId + " " + username
-        logging.info("Send to " + self.registryName + ":" + str(self.registryPort) + " -> " + message)
-        self.tcpClientSocket.send(message.encode())
-        response = self.tcpClientSocket.recv(1024).decode()
-        logging.info("Received from " + self.registryName + " -> " + response)
-        if response == "leave-success":
-            print(f"Left {roomId} successfully")
+        # Exiting the chat room
+    # def exitChatRoom(self, username, ChatRoom_Name):
+    #         if self.ChatRoomUsers != None:
+    #             for user in self.ChatRoomUsers:
+    #                 self.initiate_ChatRoom(user, f"{colorama.Fore.RED}User {username} has left the room")
+    #         message = "LEAVE-ROOM " + username + " " + ChatRoom_Name
+    #         self.tcpClientSocket.send(message.encode())
+    #         response = self.tcpClientSocket.recv(1024).decode().split()
+    #         if response[0] == "leave-success":
+    #             print(f"{colorama.Fore.RED} You have left the chat room")
+    #             self.peerServer.inChatroom = False
+    #             return 0
+    #         elif response == "leave-not-valid":
+    #             print("You are not in this chatroom")
 
+    def leaveRoom(self, username, ChatRoom_Name):
+        if self.ChatRoomUsers != None:
+            for user in self.ChatRoomUsers:
+                self.initiate_ChatRoom(user, f"{colorama.Fore.RED}User {username} has left the room")
+        message = "LEAVE-ROOM " + username + " " + ChatRoom_Name
+        self.tcpClientSocket.send(message.encode())
+        response = self.tcpClientSocket.recv(1024).decode().split()
+        if response[0] == "leave-success":
+            print(f"{colorama.Fore.RED} You have left the chat room")
+            self.peerServer.inChatroom = False
+            return 0
         elif response == "leave-not-valid":
             print("You are not in this chatroom")
 
