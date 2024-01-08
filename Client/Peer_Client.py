@@ -19,8 +19,6 @@ class PeerClient(threading.Thread):
         # keeps the server of this client
         self.peerServer = peerServer
 
-        self.peerServer.mode2 = mode
-
         # keeps the phrase that is used when creating the client
         # if the client is created with a phrase, it means this one received the request
         # this phrase should be none if this is the client of the requester peer
@@ -28,6 +26,7 @@ class PeerClient(threading.Thread):
         # keeps if this client is ending the chat or not
         self.isEndingChat = False
         self.mode = mode
+        self.peerServer.mode2 = mode
         self.message = message
         self.receiver = receiver
 

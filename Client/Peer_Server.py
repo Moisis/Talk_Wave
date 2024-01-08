@@ -2,7 +2,7 @@ from socket import *
 import threading
 import logging
 import select
-from messageformatter import  format_text
+from messageformatter import format_text
 
 
 # Server side of peer
@@ -78,7 +78,7 @@ class PeerServer(threading.Thread):
                         # if the user is not chatting, then the ip and the socket of
                         # this peer is assigned to server variables
                         if self.isChatRequested == 0:
-                            if self.inChatRoom == False:
+                            if self.mode2 != "ChatRoom":
                                 print(self.username + " is connected from " + str(addr))
                             self.connectedPeerSocket = connected
                             self.connectedPeerIP = addr[0]
@@ -140,17 +140,17 @@ class PeerServer(threading.Thread):
                         # if the message received is a quit message ':q',
                         # makes ischatrequested 1 to receive new incoming request messages
                         # removes the socket of the connected peer from the inputs list
-                        elif messageReceived[:2] == ":q" and self.inChatRoom == False:
+                        elif messageReceived[:2] == ":q" and self.mode2 != "ChatRoom":
                             self.isChatRequested = 0
                             inputs.clear()
                             inputs.append(self.tcpServerSocket)
                             # connected peer ended the chat
-                            if len(messageReceived) == 2:
+                            if len(messageReceived) == 2  and self.mode2 != "ChatRoom":
                                 print("User you're chatting with ended the chat")
                                 print("Press enter to quit the chat: ")
                         # if the message is an empty one, then it means that the
                         # connected user suddenly ended the chat(an error occurred)
-                        elif len(messageReceived) == 0:
+                        elif len(messageReceived) == 0 and self.mode2 != "ChatRoom":
                             self.isChatRequested = 0
                             inputs.clear()
                             inputs.append(self.tcpServerSocket)

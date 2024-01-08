@@ -2,7 +2,7 @@ import uuid
 import threading
 import logging
 
-from Server_UDP_Server import UDPServer
+from Server.Server_UDP_Server import UDPServer
 from Config import config_instance
 
 
@@ -166,9 +166,9 @@ class ClientThread(threading.Thread):
                         logging.info("Send to " + self.ip + ":" + str(self.port) + " -> " + response)
                         self.tcpClientSocket.send(response.encode())
 
-                            # Getting the list of users in Chat Room #
-                elif message[0] == "Get_ChatRoom_UsersList":
-                    response = "ChatRoom_Userlist " + " ".join(config_instance.db.get_room_peers(message[1]))
+                        # Getting the list of users in Chat Room #
+                elif message[0] == "GET-ROOM-USERLIST":
+                    response = "Room_Userlist " + " ".join(config_instance.db.get_room_peers(message[1]))
                     self.tcpClientSocket.send(response.encode())
 
                 elif message[0] == "LEAVE-ROOM":

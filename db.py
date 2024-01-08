@@ -4,9 +4,13 @@ from pymongo import MongoClient
 # Includes database operations
 class DB:
     # db initializations
-    def __init__(self):
+    def __init__(self, flag):
         self.client = MongoClient('mongodb://localhost:27017/')
-        self.db = self.client['p2p-chat']
+        if flag:
+            self.db = self.client['p2p-chat']
+        else:
+            self.db = self.client['Test-Talk-Wave']
+
 
     def get_online_peers_usernames(self):
         result_cursor = self.db.online_peers.find({"username": {"$exists": True}})
@@ -63,7 +67,7 @@ class DB:
         return bool(self.db.rooms.find_one({"roomId": roomId}))
 
     # tested
-    def register_room(self, roomId, username):
+    def register_room(self, roomId):
         # Check if the roomId already exists in the database
         if not self.db.rooms.find_one({"roomId": roomId}):
             room = {
@@ -72,7 +76,6 @@ class DB:
             }
             # self.db.accounts.update_one({"username": username}, {"$push": {"roomId": roomId}})
             self.db.rooms.insert_one(room)
-            self.join_room(roomId, username)
 
     # tested
     def get_first_peer(self, roomId):

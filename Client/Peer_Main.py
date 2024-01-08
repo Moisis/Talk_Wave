@@ -7,9 +7,8 @@ import logging
 import colorama
 from colorama import Fore
 
-from Peer_Server import PeerServer
-from Peer_Client import PeerClient
-
+from Client.Peer_Server import PeerServer
+from Client.Peer_Client import PeerClient
 from Config import config_instance
 
 
@@ -66,8 +65,7 @@ class peerMain:
 
                     choice = input(colorama.Fore.CYAN +
                                    "Choose: \n1.Search\n2.Start a chat\n3.Show Online Users\n4.Create "
-                                   "Chatroom\n5.Display available rooms\n6.Join Room\n7.Delete Room\n8.Leave "
-                                   "Room\n9.Logout\n")
+                                   "Chatroom\n5.Display available rooms\n6.Join Room\n7.Delete Room\n9.Logout\n")
                 # if choice is 1, creates an account with the username
                 # and password entered by the user
                 if choice == "1" and not self.isOnline:
@@ -135,7 +133,7 @@ class peerMain:
                     roomId = input("Enter a Room ID: ")
                     # print(self.loginCredentials[0])
                     # self.createRoom(roomId, self.loginCredentials[0], self.peerServerPort)
-                    self.createChatRoom(roomId)
+                    self.createChatRoom( roomId, self.loginCredentials[0])
 
 
 
@@ -147,14 +145,16 @@ class peerMain:
 
                 elif choice == "6" and self.isOnline:
 
-                    ChatRoom_Name = input("Join Chat Room: ")
-                    self.joinChatRoom(ChatRoom_Name)
-                    while self.peerServer.inChatRoom:
+                    roomId = input("Join Chat Room: ")
+                    self.joinChatRoom(roomId)
+                    while self.peerServer.mode2 == "ChatRoom":
                         message = input(f"{username}" + " : ")
                         self.ChatRoomUsers = self.updateChatRoomUsersList(ChatRoom_Name)
                         if self.ChatRoomUsers is not None:
                             if message == ":q":
-                                self.leaveRoom(username, ChatRoom_Name)
+                                self.leaveRoom(username, roomId)
+                                self.peerServer.inChatroom = False
+                                self.peerServer.mode2 = "aloo"
                                 break
                             else:
                                 for user in self.ChatRoomUsers:
@@ -167,11 +167,12 @@ class peerMain:
                 elif choice == "7" and self.isOnline:
                     roomId = input("Enter a Room ID: ")
                     self.deleteRoom(roomId, username)
-                    # print("Room Deleted Successfully\n")
+                    print("Room Deleted Successfully\n")
 
-                elif choice == "8" and self.isOnline:
-                    roomId = input("Enter a Room ID: ")
-                    self.leaveRoom(roomId, username)
+                # elif choice == "8" and self.isOnline:
+                #     roomId = input("Enter a Room ID: ")
+                #     self.leaveRoom(roomId, username)
+                #
 
 
                 # if choice is 5 and user is online, then user is asked
@@ -337,7 +338,7 @@ class peerMain:
             self.peerClient.join()
 
     # Function for creating a Chat Room
-    def createChatRoom(self, ChatRoom_Name):
+    def createChatRoom(self, ChatRoom_Name, username):
         message = "CREATE-ROOM " + ChatRoom_Name
         self.tcpClientSocket.send(message.encode())
         response = self.tcpClientSocket.recv(1024).decode().split()
@@ -382,8 +383,7 @@ class peerMain:
         response = self.tcpClientSocket.recv(1024).decode().split()
         if response[0] == "leave-success":
             print(f"{colorama.Fore.RED} You have left the chat room")
-            self.peerServer.inChatroom = False
-            self.peerServer.mode2 = "aloo"
+
             return 0
         elif response == "leave-not-valid":
             print("You are not in this chatroom")
