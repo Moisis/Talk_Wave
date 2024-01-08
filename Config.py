@@ -22,7 +22,7 @@ class ConfigServerThis:
         self.portUDP = 15500
 
         # db initialization
-        self.db = db.DB()
+        self.db = db.DB(True)
 
     def update_online_peer(self):
         self.onlinePeers = self.db.get_online_peers_usernames()

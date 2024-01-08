@@ -1,11 +1,9 @@
-
 import uuid
 import threading
 import logging
 
-from Server_UDP_Server import UDPServer
+from Server.Server_UDP_Server import UDPServer
 from Config import config_instance
-
 
 
 # This class is used to process the peer messages sent to registry
@@ -23,8 +21,8 @@ class ClientThread(threading.Thread):
         # username, online status and udp server initializations
 
         ##todo
-        # self.username = None
-        self.username = str(uuid.uuid4())
+        self.username = None
+        # self.username = str(uuid.uuid4())
         self.isOnline = True
         self.udpServer = None
 
@@ -63,13 +61,13 @@ class ClientThread(threading.Thread):
                 elif message[0] == "LOGIN":
                     # login-account-not-exist is sent to peer,
                     # if an account with the username does not exist
-                    if not  config_instance.db.is_account_exist(message[1]):
+                    if not config_instance.db.is_account_exist(message[1]):
                         response = "login-account-not-exist"
                         logging.info("Send to " + self.ip + ":" + str(self.port) + " -> " + response)
                         self.tcpClientSocket.send(response.encode())
                     # login-online is sent to peer,
                     # if an account with the username already online
-                    elif  config_instance.db.is_account_online(message[1]):
+                    elif config_instance.db.is_account_online(message[1]):
                         response = "login-online"
                         logging.info("Send to " + self.ip + ":" + str(self.port) + " -> " + response)
                         self.tcpClientSocket.send(response.encode())
@@ -77,7 +75,7 @@ class ClientThread(threading.Thread):
                     # if an account with the username exists and not online
                     else:
                         # retrieves the account's password, and checks if the one entered by the user is correct
-                        retrievedPass =  config_instance.db.get_password(message[1])
+                        retrievedPass = config_instance.db.get_password(message[1])
                         # if password is correct, then peer's thread is added to threads list
                         # peer is added to db with its username, port number, and ip address
                         if retrievedPass == message[2]:
@@ -130,13 +128,15 @@ class ClientThread(threading.Thread):
 
                 # CREATE ROOM #
                 elif message[0] == "CREATE-ROOM":
-                # CREATE-exist is sent to peer if a room with this username already exists
+                    # CREATE-exist is sent to peer if a room with this username already exists
                     if config_instance.db.is_room_exist(message[1]):
+                        print("Room Already Exists")
                         response = "chat-room-exist"
                         print("From-> " + self.ip + ":" + str(self.port) + " " + response)
                         logging.info("Send to " + self.ip + ":" + str(self.port) + " -> " + response)
                         self.tcpClientSocket.send(response.encode())
                     else:
+                        print("Room Created Successfully!")
                         config_instance.db.register_room(message[1], message[2])
                         response = "create-room-success"
                         logging.info("Send to " + self.ip + ":" + str(self.port) + " -> " + response)
@@ -150,28 +150,32 @@ class ClientThread(threading.Thread):
 
                     if config_instance.db.is_room_exist(roomId):
                         if config_instance.db.find_room_peer(roomId, message[2]):
-                            response = "join-exist"
+                            response = "join-room-exist"
                             print("From-> " + self.ip + ":" + str(self.port) + " " + response)
                             logging.info("Send to " + self.ip + ":" + str(self.port) + " -> " + response)
                             self.tcpClientSocket.send(response.encode())
 
                         else:
-                            config_instance.db.join_room(roomId, message[2])
-                            response = "join-success"
+                            response = "join-room-success"
                             logging.info("Send to " + self.ip + ":" + str(self.port) + " -> " + str(response))
                             self.tcpClientSocket.send(response.encode())
+                            config_instance.db.join_room(roomId, message[2])
 
                     else:
                         response = "room-not-exist"
                         logging.info("Send to " + self.ip + ":" + str(self.port) + " -> " + response)
                         self.tcpClientSocket.send(response.encode())
 
+                        # Getting the list of users in Chat Room #
+                elif message[0] == "GET-ROOM-USERLIST":
+                    response = "Room_Userlist " + " ".join(config_instance.db.get_room_peers(message[1]))
+                    self.tcpClientSocket.send(response.encode())
 
-                elif message[0]== "LEAVE-ROOM":
-                    roomId = message[1]
-                    username = message[2]
+                elif message[0] == "LEAVE-ROOM":
+                    roomId = message[2]
+                    username = message[1]
                     if config_instance.db.find_room_peer(roomId, username):
-                    # Leave the chatroom
+                        # Leave the chatroom
                         config_instance.db.leave_room(roomId, username)
                         print(f"{username} left the chatroom {roomId} successfully.")
                         response = "leave-success"

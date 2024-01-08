@@ -4,9 +4,13 @@ from pymongo import MongoClient
 # Includes database operations
 class DB:
     # db initializations
-    def __init__(self):
+    def __init__(self, flag):
         self.client = MongoClient('mongodb://localhost:27017/')
-        self.db = self.client['p2p-chat']
+        if flag:
+            self.db = self.client['p2p-chat']
+        else:
+            self.db = self.client['Test-Talk-Wave']
+
 
     def get_online_peers_usernames(self):
         result_cursor = self.db.online_peers.find({"username": {"$exists": True}})
@@ -58,43 +62,58 @@ class DB:
         res = self.db.online_peers.find_one({"username": username})
         return res["ip"], res["port"]
 
+    # tested
     def is_room_exist(self, roomId):
         return bool(self.db.rooms.find_one({"roomId": roomId}))
 
+    # tested
     def register_room(self, roomId, username):
-    # Check if the roomId already exists in the database
-        if self.db.rooms.find_one({"roomId": roomId}):
-            raise ValueError(f"Room with id {roomId} already exists.")
-        room = {
-            "roomId": roomId,
-            "peers": [username]
-        }
-        #self.db.accounts.update_one({"username": username}, {"$push": {"roomId": roomId}})
-        self.db.rooms.insert_one(room)
+        # Check if the roomId already exists in the database
+        if not self.db.rooms.find_one({"roomId": roomId}):
+            room = {
+                "roomId": roomId,
+                "peers": [],
+                "admin": username,
+            }
+            # self.db.accounts.update_one({"username": username}, {"$push": {"roomId": roomId}})
+            self.db.rooms.insert_one(room)
 
-
+    # tested
     def get_first_peer(self, roomId):
+        room = self.db.rooms.find_one({"roomId": roomId})
+
+        if room and "admin" in room:
+            return room["admin"]
+        # Return None or handle the case where the room or 'admin' field doesn't exist
+        return None  # Store the room information in the database
+
+    # tested
+    def get_room_peers(self, roomId):
         room = self.db.rooms.find_one({"roomId": roomId})
         # Check if the room exists and has the 'peers' field
         if room and "peers" in room:
             # Return the first element of the 'peers' field
-            return room["peers"][0]
+            return room["peers"]
         # Return None or handle the case where the room or 'peers' field doesn't exist
-        return None    # Store the room information in the database
+        return None  # Store the room information in the database
 
+    # tested
     def get_available_chatrooms(self):
         result_cursor = self.db.rooms.find({"roomId": {"$exists": True}})
         chatrooms = [doc["roomId"] for doc in result_cursor]
         return chatrooms
 
+    # tested
     def join_room(self, roomId, username):  # add members to chatroom and update if new peer joined
         self.db.rooms.update_one(
             {"roomId": roomId}, {"$push": {"peers": username}})
-        #self.db.accounts.update_one({"username": username}, {"$push": {"rooms": roomId}})
+        # self.db.accounts.update_one({"username": username}, {"$push": {"rooms": roomId}})
 
+    # tested
     def find_room_peer(self, roomId, username):
         return self.db.rooms.count_documents({"roomId": roomId, "peers": username}) > 0
 
+    # tested
     def leave_room(self, roomId, username):
         room_exists = self.db.rooms.find_one({"roomId": roomId})
         updated_peers = [
@@ -106,6 +125,8 @@ class DB:
             {"roomId": roomId},
             {'$set': {'peers': updated_peers}})
 
+
+    #tested
     def delete_room(self, roomId, username):
         # Check if the roomId exists in the database
         existing_room = self.db.rooms.find_one({"roomId": roomId})

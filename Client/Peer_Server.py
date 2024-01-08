@@ -2,13 +2,14 @@ from socket import *
 import threading
 import logging
 import select
+from messageformatter import format_text
 
 
 # Server side of peer
 class PeerServer(threading.Thread):
 
     # Client server initialization
-    def __init__(self, username, peerServerPort):
+    def __init__(self, username, peerServerPort, roomid):
         threading.Thread.__init__(self)
         # keeps the username of the peer
         self.username = username
@@ -30,7 +31,13 @@ class PeerServer(threading.Thread):
         # keeps the username of the peer that this peer is chatting with
         self.chattingClientName = None
 
-    # main method of the peer server thread
+        self.mode2 = "lol"
+
+        if roomid is None:
+            self.inChatRoom = False
+        else:
+            self.inChatRoom = True
+
     def run(self):
 
         print("Client server started...")
@@ -71,19 +78,27 @@ class PeerServer(threading.Thread):
                         # if the user is not chatting, then the ip and the socket of
                         # this peer is assigned to server variables
                         if self.isChatRequested == 0:
-                            print(self.username + " is connected from " + str(addr))
+                            if self.mode2 != "ChatRoom":
+                                print(self.username + " is connected from " + str(addr))
                             self.connectedPeerSocket = connected
                             self.connectedPeerIP = addr[0]
                     # if the socket that receives the data is the one that
                     # is used to communicate with a connected peer, then enters here
                     else:
                         # message is received from connected peer
-                        messageReceived = s.recv(1024).decode()
-                        # logs the received message
-                        logging.info("Received from " + str(self.connectedPeerIP) + " -> " + str(messageReceived))
+                        messageReceived = format_text(s.recv(1024).decode())
+                        if self.mode2 == "ChatRoom":
+                            FindIndication = messageReceived.find("ChatRoom ")
+                            if FindIndication != -1:
+                                if len(messageReceived) != 0:
+                                    print(messageReceived)
+                                    continue
+                                    # logs the received message
+                            logging.info("Received from " + str(self.connectedPeerIP) + " -> " + str(messageReceived))
+
                         # if message is a request message it means that this is the receiver side peer server
                         # so evaluate the chat request
-                        if len(messageReceived) > 11 and messageReceived[:12] == "CHAT-REQUEST":
+                        elif len(messageReceived) > 11 and messageReceived[:12] == "CHAT-REQUEST":
                             # text for proper input choices is printed however OK or REJECT is taken as input in main process of the peer
                             # if the socket that we received the data belongs to the peer that we are chatting with,
                             # enters here
@@ -118,26 +133,38 @@ class PeerServer(threading.Thread):
                         # if a message is received, and if this is not a quit message ':q' and
                         # if it is not an empty message, show this message to the user
                         elif messageReceived[:2] != ":q" and len(messageReceived) != 0:
-                            print(self.chattingClientName + ": " + messageReceived)
+                            # print(self.chattingClientName + ": " + messageReceived)
+                            if self.chattingClientName is not None:
+                                print(self.chattingClientName + ": " + messageReceived)
+
                         # if the message received is a quit message ':q',
                         # makes ischatrequested 1 to receive new incoming request messages
                         # removes the socket of the connected peer from the inputs list
-                        elif messageReceived[:2] == ":q":
+                        elif messageReceived[:2] == ":q" and self.mode2 != "ChatRoom":
                             self.isChatRequested = 0
                             inputs.clear()
                             inputs.append(self.tcpServerSocket)
                             # connected peer ended the chat
-                            if len(messageReceived) == 2:
+                            if len(messageReceived) == 2  and self.mode2 != "ChatRoom":
                                 print("User you're chatting with ended the chat")
                                 print("Press enter to quit the chat: ")
                         # if the message is an empty one, then it means that the
                         # connected user suddenly ended the chat(an error occurred)
-                        elif len(messageReceived) == 0:
+                        elif len(messageReceived) == 0 and self.mode2 != "ChatRoom":
                             self.isChatRequested = 0
                             inputs.clear()
                             inputs.append(self.tcpServerSocket)
                             print("User you're chatting with suddenly ended the chat")
                             print("Press enter to quit the chat: ")
+
+                        # Handle chat room messages
+                        elif len(messageReceived) > 17 and messageReceived[:18] == "CHAT_ROOM_MESSAGE":
+                            _, room_name, chat_message = messageReceived.split(maxsplit=2)
+                            room_members = self.chat_rooms.get(room_name, [])
+                            if self.username in room_members:
+                                print(f"{self.username} (in {room_name}): {chat_message}")
+                            else:
+                                print(f"Illegal attempt to send a chat room message to {room_name}")
             # handles the exceptions, and logs them
             except OSError as oErr:
                 logging.error("OSError: {0}".format(oErr))

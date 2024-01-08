@@ -2,9 +2,9 @@ from socket import *
 import select
 import logging
 import colorama
-from Server_Client_Thread import ClientThread
-from Config import config_instance
 
+from Config import config_instance
+from Server.Server_Client_Thread import ClientThread
 
 
 class Server_Main:
@@ -75,6 +75,3 @@ class Server_Main:
 
     # registry tcp socket is closed
     tcpSocket.close()
-
-
-server_start = Server_Main()

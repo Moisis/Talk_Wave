@@ -6,7 +6,7 @@ import logging
 # Client side of peer
 class PeerClient(threading.Thread):
     # variable initializations for the client side of the peer
-    def __init__(self, ipToConnect, portToConnect, username, peerServer, responseReceived):
+    def __init__(self, ipToConnect, portToConnect, username, peerServer, responseReceived , mode ,  message='None' , receiver=None ):
         threading.Thread.__init__(self)
         # keeps the ip address of the peer that this will connect
         self.ipToConnect = ipToConnect
@@ -18,20 +18,30 @@ class PeerClient(threading.Thread):
         self.tcpClientSocket = socket(AF_INET, SOCK_STREAM)
         # keeps the server of this client
         self.peerServer = peerServer
+
         # keeps the phrase that is used when creating the client
         # if the client is created with a phrase, it means this one received the request
         # this phrase should be none if this is the client of the requester peer
         self.responseReceived = responseReceived
         # keeps if this client is ending the chat or not
         self.isEndingChat = False
+        self.mode = mode
+        self.peerServer.mode2 = mode
+        self.message = message
+        self.receiver = receiver
 
     # main method of the peer client thread
     def run(self):
-        print("Client client started...")
+        # print("Client client started...")
         # connects to the server of other peer
         self.tcpClientSocket.connect((self.ipToConnect, self.portToConnect))
+        if self.mode == "ChatRoom":
+            #self.peerServer.isChatRequested = 1
+            RequestMessage = "ChatRoom " + self.username + " : " + self.message
+            self.tcpClientSocket.send(RequestMessage.encode())
         # if the server of this peer is not connected by someone else and if this is the requester side peer client then enters here
-        if self.peerServer.isChatRequested == 0 and self.responseReceived is None:
+        elif self.peerServer.isChatRequested == 0 and self.responseReceived is None:
+            print("Client client started...")
             # composes a request message and this is sent to server and then this waits a response message from the server this client connects
             requestMessage = "CHAT-REQUEST " + str(self.peerServer.peerServerPort) + " " + self.username
             # logs the chat request sent to other peer
