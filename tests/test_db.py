@@ -57,8 +57,8 @@ class TestDBOperations(unittest.TestCase):
     def test_get_available_chatrooms(self):
         self.assertEqual(self.db_obj.get_available_chatrooms(), [])
         # Register some chat rooms
-        self.db_obj.register_room("room1")
-        self.db_obj.register_room("room2")
+        self.db_obj.register_room("room1","admin")
+        self.db_obj.register_room("room2", "admin")
         self.assertEqual(self.db_obj.get_available_chatrooms(), ["room1", "room2"])
         collection = self.client["Test-Talk-Wave"]["rooms"]
         collection.drop()
@@ -67,7 +67,7 @@ class TestDBOperations(unittest.TestCase):
     def test_register_room(self):
         roomId = "test_room"
         username = "tests-user"
-        self.db_obj.register_room(roomId)
+        self.db_obj.register_room(roomId,username)
         self.assertTrue(self.db_obj.is_room_exist(roomId))
         collection = self.client["Test-Talk-Wave"]["rooms"]
         collection.drop()
@@ -77,7 +77,7 @@ class TestDBOperations(unittest.TestCase):
         self.assertIsNone(self.db_obj.get_first_peer(roomId))
 
         # Add a peer to the room
-        self.db_obj.register_room(roomId)
+        self.db_obj.register_room(roomId,"test_user")
         self.db_obj.join_room(roomId ,"test_user")
         self.assertEqual(self.db_obj.get_first_peer(roomId), "test_user")
         collection = self.client["Test-Talk-Wave"]["rooms"]
@@ -86,10 +86,11 @@ class TestDBOperations(unittest.TestCase):
 
     def test_get_room_peers(self):
         roomId = "test_room1"
+        username = "admin"
        # self.assertIsNone(self.db_obj.get_room_peers(roomId))
 
         # Add peers to the room
-        self.db_obj.register_room(roomId)
+        self.db_obj.register_room(roomId,username)
         self.db_obj.join_room(roomId, "test_user1")
         self.db_obj.join_room(roomId, "test_user2")
         self.assertEqual(self.db_obj.get_room_peers(roomId), ["test_user1", "test_user2"])
@@ -102,7 +103,7 @@ class TestDBOperations(unittest.TestCase):
         username2 = "tests-user2"
 
         # Join the room
-        self.db_obj.register_room(roomId)
+        self.db_obj.register_room(roomId,username)
         self.db_obj.join_room(roomId, username)
         self.assertTrue(self.db_obj.find_room_peer(roomId, username))
         # Leave the room
@@ -113,10 +114,11 @@ class TestDBOperations(unittest.TestCase):
 
     def test_is_room_exist(self):
         ChatRoom_Name = "test_room3"
+        username= "admim"
         self.assertFalse(self.db_obj.is_room_exist(ChatRoom_Name))
 
         # Register the chat room
-        self.db_obj.register_room(ChatRoom_Name)
+        self.db_obj.register_room(ChatRoom_Name, "admin")
         self.assertTrue(self.db_obj.is_room_exist(ChatRoom_Name))
         collection = self.client["Test-Talk-Wave"]["rooms"]
         collection.drop()
@@ -129,7 +131,7 @@ class TestDBOperations(unittest.TestCase):
         self.db_obj.delete_room(roomId, username)
 
         # Register the room and try to delete with a non-admin user
-        self.db_obj.register_room(roomId)
+        self.db_obj.register_room(roomId, username)
         self.db_obj.join_room(roomId, "tests-user4")
         self.db_obj.delete_room(roomId, "tests-user4")
 
@@ -144,7 +146,7 @@ class TestDBOperations(unittest.TestCase):
     def test_find_room_peer(self):
         roomId= "tests-room"
         username = "test_user"
-        self.db_obj.register_room(roomId)
+        self.db_obj.register_room(roomId, username)
         self.db_obj.join_room(roomId , username)
         self.assertEqual(True,self.db_obj.find_room_peer(roomId,username))
         collection = self.client["Test-Talk-Wave"]["rooms"]
