@@ -149,7 +149,7 @@ class peerMain:
                     self.joinChatRoom(roomId)
                     while self.peerServer.mode2 == "ChatRoom":
                         message = input(f"{username}" + " : ")
-                        self.ChatRoomUsers = self.updateChatRoomUsersList(ChatRoom_Name)
+                        self.ChatRoomUsers = self.updateChatRoomUsersList(roomId)
                         if self.ChatRoomUsers is not None:
                             if message == ":q":
                                 self.leaveRoom(username, roomId)
@@ -250,7 +250,7 @@ class peerMain:
         if response == "join-success":
             print(colorama.Fore.GREEN + "Account created...")
         elif response == "join-exist":
-            print(colorama.Fore.RED + "choose another username or login...")
+            print(colorama.Fore.RED + "Choose another username or login...")
 
     # login function
     def login(self, username, password, peerServerPort):
@@ -317,11 +317,11 @@ class peerMain:
     def updateChatRoomUsersList(self, ChatRoom_Name):
         if self.isOnline:
             # Send a request to the registry to get the Chat Room  Users update
-            message = "Get_ChatRoom_UsersList " + ChatRoom_Name
+            message = "GET-ROOM-USERLIST " + ChatRoom_Name
             self.tcpClientSocket.send(message.encode())
             response = self.tcpClientSocket.recv(1024).decode().split()
             # Process the received chat room list
-        if response[0] == "ChatRoom_Userlist":
+        if response[0] == "Room_Userlist":
             updatedChatRoomUsersList = response[1:]
             return updatedChatRoomUsersList
 
@@ -346,7 +346,7 @@ class peerMain:
             print(f"{colorama.Fore.RED}This Chat Room {ChatRoom_Name} already exist Try Again ")
             return 0
         elif response[0] == "create-room-success":
-            print(f"{colorama.Fore.YELLOW}The Chat Room {ChatRoom_Name} is created Successfully ")
+            print(f"{colorama.Fore.LIGHTGREEN_EX}The Chat Room {ChatRoom_Name} is created Successfully ")
 
         # Function for Joining a Chat Room
 
@@ -355,10 +355,10 @@ class peerMain:
         self.tcpClientSocket.send(message.encode())
         response = self.tcpClientSocket.recv(1024).decode().split()
         if response[0] == "room-not-exist":
-            print(f"{colorama.Fore.YELLOW} Chat Room {ChatRoom_Name} is not found")
+            print(f"{colorama.Fore.RED} Chat Room {ChatRoom_Name} is not found")
             return 0
         elif response[0] == "join-success":
-            print(f"{colorama.Fore.YELLOW} Joined Chat Room {ChatRoom_Name} successfully\n")
+            print(f"{colorama.Fore.LIGHTGREEN_EX} Joined Chat Room {ChatRoom_Name} successfully\n")
             self.peerServer.inChatRoom = True
             self.roomid = ChatRoom_Name
             # This for loop is for showing the users in Chat Room

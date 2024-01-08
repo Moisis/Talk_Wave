@@ -130,13 +130,13 @@ class ClientThread(threading.Thread):
                 elif message[0] == "CREATE-ROOM":
                     # CREATE-exist is sent to peer if a room with this username already exists
                     if config_instance.db.is_room_exist(message[1]):
-                        print("is room exist")
+                        print("Room Already Exists")
                         response = "chat-room-exist"
                         print("From-> " + self.ip + ":" + str(self.port) + " " + response)
                         logging.info("Send to " + self.ip + ":" + str(self.port) + " -> " + response)
                         self.tcpClientSocket.send(response.encode())
                     else:
-                        print("room created")
+                        print("Room Created Successfully!")
                         config_instance.db.register_room(message[1])
                         response = "create-room-success"
                         logging.info("Send to " + self.ip + ":" + str(self.port) + " -> " + response)
