@@ -12,9 +12,8 @@ It is a p2p chat application that uses centralized index approach. It consists o
     Chat application sends messages to registry to achieve account creation, login, logout, and search operations.
     * **Chat**<br/>
     When a user wants to chat with another user, a chat request is sent to the other user. User should send an 'OK' message to accept or a 'REJECT' message to reject. However, if user is already chatting with someone else, then a 'BUSY' message will be sent automatically.
-
+   Chatrooms are added as well allowing users to create/join groupchats with others!
 ## How to Use It?
-* Clone the repo.
-* Run 'registry.py'.
-* Run 'peer.py'.
+* Run 'Peer_Main.py'.
+* Run 'Server_Main.py'.
 * Chat!
