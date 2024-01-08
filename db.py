@@ -81,11 +81,10 @@ class DB:
     # tested
     def get_first_peer(self, roomId):
         room = self.db.rooms.find_one({"roomId": roomId})
-        # Check if the room exists and has the 'peers' field
-        if room and "peers" in room:
-            # Return the first element of the 'peers' field
-            return room["peers"][0]
-        # Return None or handle the case where the room or 'peers' field doesn't exist
+
+        if room and "admin" in room:
+            return room["admin"]
+        # Return None or handle the case where the room or 'admin' field doesn't exist
         return None  # Store the room information in the database
 
     # tested
