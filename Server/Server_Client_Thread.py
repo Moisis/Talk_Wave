@@ -137,7 +137,7 @@ class ClientThread(threading.Thread):
                         self.tcpClientSocket.send(response.encode())
                     else:
                         print("Room Created Successfully!")
-                        config_instance.db.register_room(message[1])
+                        config_instance.db.register_room(message[1], message[2])
                         response = "create-room-success"
                         logging.info("Send to " + self.ip + ":" + str(self.port) + " -> " + response)
                         self.tcpClientSocket.send(response.encode())
@@ -150,13 +150,13 @@ class ClientThread(threading.Thread):
 
                     if config_instance.db.is_room_exist(roomId):
                         if config_instance.db.find_room_peer(roomId, message[2]):
-                            response = "join-exist"
+                            response = "join-room-exist"
                             print("From-> " + self.ip + ":" + str(self.port) + " " + response)
                             logging.info("Send to " + self.ip + ":" + str(self.port) + " -> " + response)
                             self.tcpClientSocket.send(response.encode())
 
                         else:
-                            response = "join-success"
+                            response = "join-room-success"
                             logging.info("Send to " + self.ip + ":" + str(self.port) + " -> " + str(response))
                             self.tcpClientSocket.send(response.encode())
                             config_instance.db.join_room(roomId, message[2])

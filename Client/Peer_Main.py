@@ -339,7 +339,7 @@ class peerMain:
 
     # Function for creating a Chat Room
     def createChatRoom(self, ChatRoom_Name, username):
-        message = "CREATE-ROOM " + ChatRoom_Name
+        message = "CREATE-ROOM " + ChatRoom_Name + " " + username
         self.tcpClientSocket.send(message.encode())
         response = self.tcpClientSocket.recv(1024).decode().split()
         if response[0] == "chat-room-exist":
@@ -357,7 +357,7 @@ class peerMain:
         if response[0] == "room-not-exist":
             print(f"{colorama.Fore.RED} Chat Room {ChatRoom_Name} is not found")
             return 0
-        elif response[0] == "join-success":
+        elif response[0] == "join-room-success":
             print(f"{colorama.Fore.LIGHTGREEN_EX} Joined Chat Room {ChatRoom_Name} successfully\n")
             self.peerServer.inChatRoom = True
             self.roomid = ChatRoom_Name
@@ -371,7 +371,7 @@ class peerMain:
                 for user in self.ChatRoomUsers:
                     self.Start_ChatRoom(user,
                                         f"User {self.loginCredentials[0]} has joined the {ChatRoom_Name} Chat Room")
-        elif response == "join-exist":
+        elif response == "join-room-exist":
             print("you are already in chatroom")
 
     def leaveRoom(self, username, ChatRoom_Name):
